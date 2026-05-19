@@ -79,7 +79,7 @@ Reglas:
 - Para salud/vet: perro/gato/persona con guardapolvo
 - Para tech/startup: cohete/estrella/persona tech
 - Para comida/café: taza/fruta específica/persona chef
-- Para autos/automotriz/taller/concesionaria: car (auto animado estilo vintage)
+- Para autos/automotriz/taller/concesionaria: car. El promptHint debe especificar el tipo exacto de auto: "cute Duolingo-style [tipo] car mascot, round compact body, huge headlight eyes, tiny legs, [color] paint" — mencioná si es hatchback, beetle, muscle car, truck, etc. según el negocio
 - Para transporte/logística: car, cohete
 - Para frutos secos/nueces/semillas/snacks naturales: nut (almendra, nuez, pistacho animado)
 - Para marcas de productos/packaging: bag (paquete animado con cara)

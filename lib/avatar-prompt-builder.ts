@@ -105,25 +105,33 @@ const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
   star: `cute golden star mascot with face and arms, sparkly expressive, floating in space no floor no ground`,
   rocket: `cute rocket ship mascot with friendly face on the window, 3D cartoon style, floating in air no floor no ground no shadow`,
   diamond: `cute faceted gem mascot with cartoon eyes and smile, floating no floor no shadow`,
-  car: `cute animated cartoon car mascot, classic vintage style, big round headlight eyes, friendly windshield smile, shiny paint, floating no floor no shadow`,
+  car: `cute Duolingo-style cartoon car mascot character, rounded compact body like a friendly hatchback or beetle, huge expressive circular headlight eyes with pupils, wide happy bumper smile, small round wheels with tiny cartoon legs and feet, short antenna or roof detail, glossy shiny paint, 3D render, floating no floor no shadow`,
   nut: `cute animated nut or seed mascot (walnut, almond, or pistachio style), expressive cartoon face, tiny arms, floating no floor no shadow`,
   bag: `cute animated product bag or package mascot, friendly face on the front, brand-colored packaging, floating no floor no shadow`,
 };
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
   const isHuman = config.archetype === "human_male" || config.archetype === "human_female";
+  const isCar = config.archetype === "car";
   const typeLine = config.promptHint ?? (TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male);
   const agentTypeModifier =
     !config.promptHint && isHuman && config.agentType
       ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "")
       : "";
   const logoInstruction = config.logoUrl
-    ? `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`
+    ? (isCar
+        ? `The car has a small brand badge or decal on its hood.`
+        : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`)
     : "";
   const clothingHint = config.clothingText
-    ? `Character's clothing or collar includes "${config.clothingText}" naturally integrated as an embroidered patch or name badge.`
+    ? (isCar
+        ? `The car body has a small "${config.clothingText}" badge or decal.`
+        : `Character's clothing or collar includes "${config.clothingText}" naturally integrated as an embroidered patch or name badge.`)
     : `Subtle identity energy for "${config.businessName}" — expressive character, no literal text in the image.`;
-  const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
+  // For car archetypes, color goes directly to body paint for accuracy
+  const colors = isCar
+    ? `Car body painted in ${config.brandColor}${config.brandColor2 ? `, accent details in ${config.brandColor2}` : ""}, glossy shiny finish.`
+    : `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
   const varSuffix =
     config.variation && config.variation > 0 ? ` Unique variation ${config.variation}, slightly different pose.` : "";
 
