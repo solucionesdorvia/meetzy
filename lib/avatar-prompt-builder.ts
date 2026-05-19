@@ -8,6 +8,22 @@ transparent background, isolated on transparent, no background, no backdrop,
 cut-out character subject only, alpha channel, PNG-friendly, professional mascot,
 centered composition, big expressive eyes, smooth glossy textures`.replace(/\n/g, " ");
 
+/**
+ * Agent-type visual modifiers applied to human archetypes.
+ * Accessories are placed on the HEAD/FACE area so they remain visible
+ * above the brand-color shirt SVG overlay that covers the body.
+ */
+export const AGENT_TYPE_MODIFIERS: Record<string, string> = {
+  vendedor:
+    "confident sales professional, well-groomed hair, subtle lapel pin or small tie clip visible at collar, charming engaging smile, business-casual look",
+  guia:
+    "friendly approachable guide, small wireless earpiece on one ear, curious open expression, casual-smart look, slight forward lean suggesting attentiveness",
+  soporte:
+    "tech-savvy support specialist, small bluetooth headset or earpiece clearly visible on ear, calm helpful expression, casual tech style",
+  recepcionista:
+    "polished front-desk professional, neat well-groomed look, warm welcoming smile, small elegant earring or subtle accessory, formal-friendly style",
+};
+
 export type AvatarArchetype =
   | "human_male"
   | "human_female"
@@ -31,6 +47,8 @@ export interface AvatarPromptConfig {
   businessName: string;
   agentName: string;
   logoUrl?: string | null;
+  /** Agent type drives accessory/expression modifier for human archetypes */
+  agentType?: string;
   /** Extra variation suffix for regenerations */
   variation?: number;
 }
@@ -53,7 +71,10 @@ const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
 };
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
+  const isHuman = config.archetype === "human_male" || config.archetype === "human_female";
   const typeLine = TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male;
+  const agentTypeModifier =
+    isHuman && config.agentType ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "") : "";
   const logoInstruction = config.logoUrl
     ? `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`
     : "";
@@ -65,6 +86,7 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
   return [
     AVATAR_STYLE_BASE,
     typeLine,
+    agentTypeModifier,
     colors,
     logoInstruction,
     nameHint,

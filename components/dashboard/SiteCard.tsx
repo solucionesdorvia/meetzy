@@ -8,6 +8,7 @@ import { useProductToast } from "@/components/providers/product-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAgentConfig } from "@/lib/agent-type-config";
+import AgentAvatar from "@/components/avatar/AgentAvatar";
 
 const INTENT_SEGMENTS: { key: string; color: string }[] = [
   { key: "exploring", color: "var(--intent-exploring)" },
@@ -35,7 +36,10 @@ export interface SiteCardModel {
   agentName: string;
   agentType: string;
   brandColor: string;
+  brandColor2: string;
+  logoUrl: string | null;
   avatarType: string | null;
+  avatarSubtype: string | null;
   avatarImageUrl: string | null;
   conversationsToday: number;
   conversationsWeek: number;
@@ -121,19 +125,19 @@ export default function SiteCard({ site }: { site: SiteCardModel }) {
         }}
       >
         {/* Avatar 40px */}
-        <div
-          className="relative flex size-[40px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-md)] font-mono text-[12px] font-bold text-white"
-        >
+        <div className="relative shrink-0 size-[40px] overflow-hidden rounded-[var(--radius-md)]">
           {site.avatarImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={site.avatarImageUrl} alt="" className="mz-avatar-img size-full object-contain" />
           ) : (
-            <span
-              style={{ backgroundColor: site.brandColor }}
-              className="flex size-full items-center justify-center font-mono tracking-tight"
-            >
-              {initials}
-            </span>
+            <AgentAvatar
+              size={40}
+              gender={site.avatarSubtype === "female" ? "female" : "male"}
+              agentType={site.agentType}
+              brandColor={site.brandColor}
+              brandColor2={site.brandColor2}
+              logoUrl={site.logoUrl}
+            />
           )}
         </div>
 

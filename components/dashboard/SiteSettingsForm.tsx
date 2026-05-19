@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import DeleteSiteButton from "@/components/dashboard/DeleteSiteButton";
 import { useProductToast } from "@/components/providers/product-toast";
-import { User, Palette, Webhook, Settings2, Save, Zap, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { User, Palette, Webhook, Settings2, Save, Zap, CheckCircle2, XCircle, Loader2, Upload, X } from "lucide-react";
+import AgentAvatar from "@/components/avatar/AgentAvatar";
 
 interface SiteData {
   siteId: string;
@@ -17,6 +18,9 @@ interface SiteData {
   language: string;
   brandColor: string;
   brandColor2: string;
+  logoUrl: string | null;
+  avatarType: string | null;
+  avatarSubtype: string | null;
   webhookUrl: string | null;
   calBookingUrl: string | null;
   voiceEnabled: boolean;
@@ -107,6 +111,10 @@ export default function SiteSettingsForm({ site }: { site: SiteData }) {
     widgetPosition: site.widgetPosition ?? "bottom-right",
   });
 
+  const [logoUrl, setLogoUrl] = useState<string>(site.logoUrl ?? "");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -147,7 +155,7 @@ export default function SiteSettingsForm({ site }: { site: SiteData }) {
       const res = await fetch(`/api/sites/${site.siteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, logoUrl: logoUrl.trim() || null }),
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
@@ -165,6 +173,25 @@ export default function SiteSettingsForm({ site }: { site: SiteData }) {
       push("Error inesperado al guardar", "error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/onboarding/upload-logo", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = (await res.json()) as { url?: string };
+      if (data.url) setLogoUrl(data.url);
+    } catch {
+      push("No se pudo subir el logo. Intentá de nuevo.", "error");
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
     }
   }
 
@@ -230,34 +257,93 @@ export default function SiteSettingsForm({ site }: { site: SiteData }) {
           {/* ── Marca ─────────────────────────────────────── */}
           <Section
             icon={<Palette className="size-4" />}
-            title="Colores de marca"
-            description="El widget se adapta a tu paleta de colores."
+            title="Identidad de marca"
+            description="Colores y logo que se aplican al avatar y al widget."
           >
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Color primario">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    name="brandColor"
-                    value={form.brandColor}
-                    onChange={handleChange}
-                    className="h-10 w-10 shrink-0 cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-transparent p-1"
-                  />
-                  <input name="brandColor" value={form.brandColor} onChange={handleChange} className="dash-input flex-1 font-mono text-[13px]" />
+            <div className="flex flex-col sm:flex-row gap-8">
+              {/* Preview en vivo */}
+              <div className="flex flex-col items-center gap-3 sm:shrink-0">
+                <AgentAvatar
+                  size={96}
+                  gender={site.avatarSubtype === "female" ? "female" : "male"}
+                  agentType={site.agentType ?? "guia"}
+                  brandColor={form.brandColor}
+                  brandColor2={form.brandColor2}
+                  logoUrl={logoUrl || null}
+                />
+                <span className="text-[11px] text-[var(--text-tertiary)]">Preview en vivo</span>
+              </div>
+
+              {/* Controles */}
+              <div className="flex-1 space-y-5">
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <Field label="Color primario">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        name="brandColor"
+                        value={form.brandColor}
+                        onChange={handleChange}
+                        className="h-10 w-10 shrink-0 cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-transparent p-1"
+                      />
+                      <input name="brandColor" value={form.brandColor} onChange={handleChange} className="dash-input flex-1 font-mono text-[13px]" />
+                    </div>
+                  </Field>
+                  <Field label="Color secundario">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        name="brandColor2"
+                        value={form.brandColor2}
+                        onChange={handleChange}
+                        className="h-10 w-10 shrink-0 cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-transparent p-1"
+                      />
+                      <input name="brandColor2" value={form.brandColor2} onChange={handleChange} className="dash-input flex-1 font-mono text-[13px]" />
+                    </div>
+                  </Field>
                 </div>
-              </Field>
-              <Field label="Color secundario">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    name="brandColor2"
-                    value={form.brandColor2}
-                    onChange={handleChange}
-                    className="h-10 w-10 shrink-0 cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-transparent p-1"
-                  />
-                  <input name="brandColor2" value={form.brandColor2} onChange={handleChange} className="dash-input flex-1 font-mono text-[13px]" />
-                </div>
-              </Field>
+
+                <Field label="Logo de tu marca" hint="Se muestra como badge sobre el avatar. PNG o SVG con fondo transparente recomendado.">
+                  <div className="flex items-center gap-3">
+                    {logoUrl ? (
+                      <div className="relative flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white/5 p-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setLogoUrl("")}
+                          className="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                          <X className="size-2.5" />
+                        </button>
+                      </div>
+                    ) : null}
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="flex gap-2">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--border-default)] px-3 py-2 text-[12px] text-[var(--text-secondary)] hover:border-[var(--accent-border)] hover:text-[var(--accent)] transition-colors">
+                          {logoUploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+                          {logoUploading ? "Subiendo…" : "Subir imagen"}
+                          <input
+                            ref={logoInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleLogoUpload}
+                            disabled={logoUploading}
+                          />
+                        </label>
+                      </div>
+                      <input
+                        type="url"
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        className="dash-input text-[12px]"
+                        placeholder="O pegá una URL de imagen"
+                      />
+                    </div>
+                  </div>
+                </Field>
+              </div>
             </div>
           </Section>
 

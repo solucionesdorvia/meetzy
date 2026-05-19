@@ -2,17 +2,22 @@
 
 /**
  * AgentAvatar — avatar compuesto en capas:
- *   1. Fondo con tinte de marca
- *   2. Imagen de cara (flat illustration PNG)
- *   3. Ropa SVG con brandColor (cubre la remera neutral de la imagen)
- *   4. Logo del cliente sobre la ropa (opcional, size >= 72)
- *   5. Animación idle (float) + speaking (glow ring + waveform)
+ *   1. Fondo con gradiente signature Meetzy (oscuro + glow violeta)
+ *   2. Imagen de cara PNG seleccionada por gender + agentType
+ *   3. Ropa SVG con brandColor (tiñe la camisa con el color del cliente)
+ *   4. Badge "M" de Meetzy sobre la ropa (branding sutil)
+ *   5. Logo del cliente sobre la ropa (opcional, size >= 72)
+ *   6. Animación idle (float) + speaking (glow ring + waveform)
  */
+
+import { getAvatarAsset } from "@/lib/avatar-asset-map";
 
 interface AgentAvatarProps {
   size?       : number;
   gender?     : "male" | "female";
+  agentType?  : string;
   brandColor? : string;
+  brandColor2?: string;
   logoUrl?    : string | null;
   isSpeaking? : boolean;
   className?  : string;
@@ -34,24 +39,29 @@ function hexAlpha(hex: string, a: number) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-const MALE_FACE_URL   = "/avatars/male.png";
-const FEMALE_FACE_URL = "/avatars/female.png";
+// Meetzy brand violet
+const MZ_VIOLET = "#7c6cff";
 
 export default function AgentAvatar({
-  size       = 56,
-  gender     = "male",
-  brandColor = "#7c6cff",
-  logoUrl    = null,
-  isSpeaking = false,
-  className  = "",
+  size        = 56,
+  gender      = "male",
+  agentType   = "guia",
+  brandColor  = "#7c6cff",
+  brandColor2,
+  logoUrl     = null,
+  isSpeaking  = false,
+  className   = "",
 }: AgentAvatarProps) {
-  const gid       = brandColor.replace(/[^a-f0-9]/gi, "").slice(0, 6) || "brand";
-  const shirtDark = adjust(brandColor, -45);
-  const bgLight   = adjust(brandColor, 196);
-  const bgMid     = adjust(brandColor, 182);
-  const showLogo  = !!logoUrl && size >= 72;
-  const showWave  = isSpeaking && size >= 72;
-  const faceUrl   = gender === "female" ? FEMALE_FACE_URL : MALE_FACE_URL;
+  const gid        = brandColor.replace(/[^a-f0-9]/gi, "").slice(0, 6) || "brand";
+  const shirt2     = brandColor2 ?? adjust(brandColor, -45);
+  const shirtDark  = adjust(shirt2, -20);
+  const showLogo   = !!logoUrl && size >= 40;
+  const showBadge  = size >= 56 && !showLogo;
+  const showWave   = isSpeaking && size >= 72;
+  // Logo badge flotante: circular, esquina inferior-derecha
+  const badgePx    = Math.round(size * 0.34);
+  const badgeOff   = -Math.round(size * 0.04);
+  const faceUrl    = getAvatarAsset(gender, agentType);
 
   // Glow ring cuando habla
   const glowShadow = isSpeaking
@@ -79,39 +89,35 @@ export default function AgentAvatar({
         aria-hidden="true"
       >
         <defs>
-          {/* Fondo */}
-          <radialGradient id={`bg-${gid}`} cx="50%" cy="38%" r="65%">
-            <stop offset="0%"   stopColor={bgLight} />
-            <stop offset="100%" stopColor={bgMid}   />
+          {/* Fondo: gradiente signature Meetzy — oscuro con glow violeta central */}
+          <radialGradient id={`mz-bg-${gid}`} cx="50%" cy="40%" r="60%">
+            <stop offset="0%"   stopColor={hexAlpha(MZ_VIOLET, 0.28)} />
+            <stop offset="55%"  stopColor="#0c0a18" />
+            <stop offset="100%" stopColor="#040405" />
           </radialGradient>
 
-          {/* Ropa principal */}
-          <linearGradient id={`sh-${gid}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          {/* Ropa: gradiente brandColor → brandColor2 del cliente */}
+          <linearGradient id={`sh-${gid}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%"   stopColor={brandColor} />
-            <stop offset="100%" stopColor={shirtDark}  />
+            <stop offset="100%" stopColor={shirt2}     />
           </linearGradient>
 
-          {/* Sombra interior ropa (lapel oscuro) */}
+          {/* Solapa oscura */}
           <linearGradient id={`sl-${gid}`} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%"   stopColor={shirtDark} />
-            <stop offset="100%" stopColor={adjust(brandColor, -70)} />
+            <stop offset="100%" stopColor={adjust(shirt2, -50)} />
           </linearGradient>
 
           {/* Clip circular */}
           <clipPath id={`clip-${gid}`}>
             <circle cx="50" cy="50" r="50" />
           </clipPath>
-
-          {/* Clip logo */}
-          <clipPath id={`logo-clip-${gid}`}>
-            <rect x="34" y="78" width="32" height="16" rx="3" />
-          </clipPath>
         </defs>
 
-        {/* Fondo */}
-        <circle cx="50" cy="50" r="50" fill={`url(#bg-${gid})`} />
+        {/* ── Fondo Meetzy ─────────────────────────────────────────────── */}
+        <circle cx="50" cy="50" r="50" fill={`url(#mz-bg-${gid})`} />
 
-        {/* Imagen de cara (headset integrado en la ilustración) */}
+        {/* ── Imagen de cara PNG (gender + agentType) ───────────────────── */}
         <image
           href={faceUrl}
           x="0" y="-8"
@@ -120,7 +126,7 @@ export default function AgentAvatar({
           preserveAspectRatio="xMidYMid meet"
         />
 
-        {/* ── Ropa: cubre la zona inferior de la imagen ────────────────── */}
+        {/* ── Ropa: zona inferior con color de marca ────────────────────── */}
 
         {/* Cuerpo principal de la camisa */}
         <path
@@ -128,7 +134,7 @@ export default function AgentAvatar({
           fill={`url(#sh-${gid})`}
         />
 
-        {/* Solapa izquierda (más oscura, da profundidad de saco) */}
+        {/* Solapa izquierda */}
         <path
           d="M-2 93 Q16 78 38 81 L44 88 L50 93 Q40 88 28 82 Q14 79 -2 93Z"
           fill={`url(#sl-${gid})`}
@@ -142,7 +148,7 @@ export default function AgentAvatar({
           opacity="0.55"
         />
 
-        {/* Línea de cuello / collar */}
+        {/* Línea de cuello */}
         <path
           d="M44 88 Q50 97 56 88"
           fill="none"
@@ -152,18 +158,24 @@ export default function AgentAvatar({
           opacity="0.4"
         />
 
-        {/* Sombra de cuello sobre la ropa */}
+        {/* Sombra de cuello */}
         <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
 
-        {/* ── Logo del cliente ──────────────────────────────────────────── */}
-        {showLogo && (
-          <image
-            href={logoUrl!}
-            x="34" y="78"
-            width="32" height="16"
-            clipPath={`url(#logo-clip-${gid})`}
-            preserveAspectRatio="xMidYMid meet"
-          />
+        {/* ── Badge "M" de Meetzy sobre la camisa ──────────────────────── */}
+        {showBadge && (
+          <text
+            x="50" y="97"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="7"
+            fontWeight="800"
+            fontFamily="system-ui, -apple-system, sans-serif"
+            fill="white"
+            opacity="0.22"
+            letterSpacing="-0.3"
+          >
+            M
+          </text>
         )}
 
         {/* ── Waveform bars cuando habla ───────────────────────────────── */}
@@ -183,29 +195,47 @@ export default function AgentAvatar({
         )}
       </svg>
 
+      {/* ── Logo badge circular flotante — esquina inferior-derecha ─── */}
+      {showLogo && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: badgeOff,
+            right: badgeOff,
+            width: badgePx,
+            height: badgePx,
+            borderRadius: "50%",
+            background: "white",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.15)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: Math.round(badgePx * 0.12),
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoUrl!}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        </div>
+      )}
+
       <style>{`
-        /* Idle: float suave */
         @keyframes aa-float {
           0%, 100% { transform: translateY(0px); }
           50%       { transform: translateY(-4px); }
         }
-
-        /* Speaking: micro-pulso */
         @keyframes aa-pulse {
           0%, 100% { transform: scale(1); }
           50%       { transform: scale(1.025); }
         }
-
-        /* Waveform bars */
         @keyframes aa-bar {
           from { transform: scaleY(0.35); }
           to   { transform: scaleY(1); }
-        }
-
-        /* Mic active dot */
-        @keyframes aa-mic {
-          from { opacity: 0.4; r: 1.5px; }
-          to   { opacity: 1;   r: 2.5px; }
         }
       `}</style>
     </div>
