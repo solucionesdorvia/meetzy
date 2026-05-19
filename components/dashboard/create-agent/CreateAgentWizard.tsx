@@ -474,7 +474,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
         brandColor,
         brandColor2,
         logoUrl,
-        avatarImageUrl: rawPreviewUrl,
+        avatarImageUrl: null, // data URI handled separately by wizard-finalize
         archetype: archetype as AvatarArchetype,
         agentType,
         systemPrompt: systemPrompt.trim() || "Sos un asistente amable de la marca.",
