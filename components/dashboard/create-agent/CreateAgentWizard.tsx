@@ -156,6 +156,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [clothingText, setClothingText] = useState("");
   const [createdSiteId, setCreatedSiteId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
+  const [finalizingAvatar, setFinalizingAvatar] = useState(false);
   const [rightTransition, setRightTransition] = useState<"in" | "out">("in");
 
   const archetype = useMemo(() => {
@@ -423,7 +424,10 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     if (!archetype || !agentType) return;
     let normalized = url.trim();
     if (!normalized.startsWith("http")) normalized = `https://${normalized}`;
-    const img = avatarUrl && !genFallback ? avatarUrl : null;
+
+    // Pass the raw preview URL temporarily — we'll upgrade it with the full pipeline below
+    const rawPreviewUrl = avatarUrl && !genFallback ? avatarUrl : null;
+
     const r = await fetch("/api/onboarding/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -434,7 +438,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
         brandColor,
         brandColor2,
         logoUrl,
-        avatarImageUrl: img,
+        avatarImageUrl: rawPreviewUrl,
         archetype: archetype as AvatarArchetype,
         agentType,
         systemPrompt: systemPrompt.trim() || "Sos un asistente amable de la marca.",
@@ -449,7 +453,34 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       push(j.error ?? "Error al crear el sitio", "error");
       return;
     }
-    setCreatedSiteId(j.siteId ?? null);
+
+    const siteId = j.siteId ?? null;
+    setCreatedSiteId(siteId);
+
+    // Run full pipeline: bg removal + Cloudinary (same logic as wizard-save)
+    if (rawPreviewUrl && siteId && selectedSuggestion) {
+      setFinalizingAvatar(true);
+      try {
+        const fr = await fetch("/api/avatar/wizard-finalize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            siteId,
+            falUrl: rawPreviewUrl,
+            agentName: agentName.trim() || "Asistente",
+            archetype: selectedSuggestion.archetype,
+            logoUrl: logoUrl || undefined,
+          }),
+        });
+        const fj = (await fr.json()) as { avatarUrl?: string; error?: string };
+        if (fj.avatarUrl) setAvatarUrl(fj.avatarUrl);
+      } catch {
+        /* non-blocking — preview URL still works as fallback */
+      } finally {
+        setFinalizingAvatar(false);
+      }
+    }
+
     setCelebrate(true);
     window.setTimeout(() => setCelebrate(false), 2200);
     setMacroStep(4);
@@ -823,8 +854,16 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                           <RefreshCw className="size-3.5" />
                           Regenerar
                         </Button>
-                        <Button type="button" size="sm" className="w-full gap-1 bg-[var(--success)] hover:bg-[var(--success)]/90" onClick={() => void finalizeSite()}>
-                          Me encanta ✓
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full gap-1 bg-[var(--success)] hover:bg-[var(--success)]/90"
+                          disabled={finalizingAvatar}
+                          onClick={() => void finalizeSite()}
+                        >
+                          {finalizingAvatar ? (
+                            <><Loader2 className="size-3.5 animate-spin" /> Procesando…</>
+                          ) : "Me encanta ✓"}
                         </Button>
                       </div>
                     ) : null}
