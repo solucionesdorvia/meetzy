@@ -111,6 +111,23 @@ export default function AgentAvatar({
         {/* Fondo */}
         <circle cx="50" cy="50" r="50" fill={`url(#bg-${gid})`} />
 
+        {/* ── Headset banda — detrás de la cara ────────────────────────── */}
+        {/* Se dibuja ANTES de la imagen para quedar detrás del pelo */}
+        <path
+          d="M26 56 C24 44, 32 22, 50 20 C68 22, 76 44, 74 56"
+          fill="none"
+          stroke={adjust(brandColor, -35)}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M26 56 C24 44, 32 22, 50 20 C68 22, 76 44, 74 56"
+          fill="none"
+          stroke={brandColor}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+
         {/* Imagen de cara */}
         <image
           href={faceUrl}
@@ -120,59 +137,43 @@ export default function AgentAvatar({
           preserveAspectRatio="xMidYMid meet"
         />
 
-        {/* ── Headset — fino, proporcional, headset de oficina ────────── */}
+        {/* ── Headset piezas — delante de la cara ──────────────────────── */}
 
-        {/* Banda sobre la cabeza — trazo fino */}
-        <path
-          d="M22 55 C20 38, 30 14, 50 11 C70 14, 80 38, 78 55"
-          fill="none"
-          stroke={adjust(brandColor, -30)}
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M22 55 C20 38, 30 14, 50 11 C70 14, 80 38, 78 55"
-          fill="none"
-          stroke={brandColor}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-
-        {/* Auricular izquierdo — pequeño y proporcional */}
-        <ellipse cx="20" cy="57" rx="6.5" ry="7.5" fill={adjust(brandColor, -30)} />
-        <ellipse cx="20" cy="57" rx="5"   ry="6"   fill={brandColor} />
-        <ellipse cx="20" cy="57" rx="2.5" ry="3"   fill={adjust(brandColor, -50)} />
+        {/* Auricular izquierdo — pegado al lado de la cabeza */}
+        <ellipse cx="23" cy="57" rx="5.5" ry="6.5" fill={adjust(brandColor, -35)} />
+        <ellipse cx="23" cy="57" rx="4"   ry="5"   fill={brandColor} />
+        <ellipse cx="23" cy="57" rx="2"   ry="2.5" fill={adjust(brandColor, -55)} />
 
         {/* Auricular derecho */}
-        <ellipse cx="80" cy="57" rx="6.5" ry="7.5" fill={adjust(brandColor, -30)} />
-        <ellipse cx="80" cy="57" rx="5"   ry="6"   fill={brandColor} />
-        <ellipse cx="80" cy="57" rx="2.5" ry="3"   fill={adjust(brandColor, -50)} />
+        <ellipse cx="77" cy="57" rx="5.5" ry="6.5" fill={adjust(brandColor, -35)} />
+        <ellipse cx="77" cy="57" rx="4"   ry="5"   fill={brandColor} />
+        <ellipse cx="77" cy="57" rx="2"   ry="2.5" fill={adjust(brandColor, -55)} />
 
-        {/* Brazo del micrófono — fino */}
+        {/* Brazo del micrófono — sale del auricular izq, curva al frente */}
         <path
-          d="M15 62 Q11 72 24 74"
+          d="M19 62 Q16 70 27 72"
           fill="none"
-          stroke={adjust(brandColor, -30)}
-          strokeWidth="2"
+          stroke={adjust(brandColor, -35)}
+          strokeWidth="1.8"
           strokeLinecap="round"
         />
         <path
-          d="M15 62 Q11 72 24 74"
+          d="M19 62 Q16 70 27 72"
           fill="none"
           stroke={brandColor}
-          strokeWidth="1.2"
+          strokeWidth="1"
           strokeLinecap="round"
         />
 
-        {/* Cápsula del micrófono — pequeña */}
-        <rect x="21" y="71.5" width="7" height="4.5" rx="2.2" fill={adjust(brandColor, -30)} />
-        <rect x="22" y="72.2" width="5" height="3"   rx="1.5" fill={brandColor} />
+        {/* Cápsula mic */}
+        <rect x="24" y="70" width="6" height="4" rx="2" fill={adjust(brandColor, -35)} />
+        <rect x="25" y="70.6" width="4" height="2.8" rx="1.4" fill={brandColor} />
 
-        {/* LED activo del mic cuando habla */}
+        {/* LED activo cuando habla */}
         {isSpeaking && (
           <circle
-            cx="24.5" cy="73.7"
-            r="1.4"
+            cx="27" cy="72"
+            r="1.2"
             fill="white"
             opacity="0.95"
             style={{ animation: "aa-mic 0.8s ease-in-out infinite alternate" }}
