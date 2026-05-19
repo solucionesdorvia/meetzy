@@ -3,11 +3,10 @@
 /**
  * AgentAvatar — avatar compuesto en capas:
  *   1. Fondo con tinte de marca
- *   2. Imagen de cara (IA-generada o placeholder DiceBear)
- *   3. Ropa SVG con brandColor
- *   4. Logo del cliente encima de la ropa (opcional)
- *
- * Reemplazar MALE_FACE_URL / FEMALE_FACE_URL con las imágenes definitivas.
+ *   2. Imagen de cara (flat illustration PNG)
+ *   3. Ropa SVG con brandColor (cubre la remera neutral de la imagen)
+ *   4. Logo del cliente sobre la ropa (opcional, size >= 72)
+ *   5. Animación idle (float) + speaking (glow ring + waveform)
  */
 
 interface AgentAvatarProps {
@@ -30,6 +29,10 @@ function adjust(hex: string, amt: number): string {
     .map((v) => v.toString(16).padStart(2, "0"))
     .join("")}`;
 }
+function hexAlpha(hex: string, a: number) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
 
 const MALE_FACE_URL   = "/avatars/male.png";
 const FEMALE_FACE_URL = "/avatars/female.png";
@@ -43,16 +46,30 @@ export default function AgentAvatar({
   className  = "",
 }: AgentAvatarProps) {
   const gid       = brandColor.replace(/[^a-f0-9]/gi, "").slice(0, 6) || "brand";
-  const shirtDark = adjust(brandColor, -40);
+  const shirtDark = adjust(brandColor, -45);
   const bgLight   = adjust(brandColor, 196);
-  const bgMid     = adjust(brandColor, 180);
+  const bgMid     = adjust(brandColor, 182);
   const showLogo  = !!logoUrl && size >= 72;
+  const showWave  = isSpeaking && size >= 64;
   const faceUrl   = gender === "female" ? FEMALE_FACE_URL : MALE_FACE_URL;
+
+  // Glow ring cuando habla
+  const glowShadow = isSpeaking
+    ? `0 0 0 ${Math.round(size * 0.04)}px ${hexAlpha(brandColor, 0.5)}, 0 0 ${Math.round(size * 0.25)}px ${hexAlpha(brandColor, 0.35)}`
+    : undefined;
 
   return (
     <div
       className={`relative inline-flex items-center justify-center rounded-full overflow-hidden ${className}`}
-      style={{ width: size, height: size, flexShrink: 0 }}
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        borderRadius: "50%",
+        boxShadow: glowShadow,
+        animation: isSpeaking ? "aa-pulse 1.4s ease-in-out infinite" : "aa-float 3.5s ease-in-out infinite",
+        transition: "box-shadow 0.4s ease",
+      }}
     >
       <svg
         viewBox="0 0 100 100"
@@ -68,10 +85,16 @@ export default function AgentAvatar({
             <stop offset="100%" stopColor={bgMid}   />
           </radialGradient>
 
-          {/* Ropa */}
+          {/* Ropa principal */}
           <linearGradient id={`sh-${gid}`} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%"   stopColor={brandColor} />
             <stop offset="100%" stopColor={shirtDark}  />
+          </linearGradient>
+
+          {/* Sombra interior ropa (lapel oscuro) */}
+          <linearGradient id={`sl-${gid}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stopColor={shirtDark} />
+            <stop offset="100%" stopColor={adjust(brandColor, -70)} />
           </linearGradient>
 
           {/* Clip circular */}
@@ -79,61 +102,104 @@ export default function AgentAvatar({
             <circle cx="50" cy="50" r="50" />
           </clipPath>
 
-          {/* Clip logo redondeado */}
-          <clipPath id={`logo-${gid}`}>
-            <rect x="33" y="77" width="34" height="18" rx="4" />
+          {/* Clip logo */}
+          <clipPath id={`logo-clip-${gid}`}>
+            <rect x="34" y="78" width="32" height="16" rx="3" />
           </clipPath>
         </defs>
 
         {/* Fondo */}
         <circle cx="50" cy="50" r="50" fill={`url(#bg-${gid})`} />
 
-        {/* Ropa / hombros — se dibuja ANTES de la cara para que quede por debajo */}
-        <path
-          d="M0 87 Q17 70 38 73 L44 83 L50 88 L56 83 L62 73 Q83 70 100 87 L100 100 L0 100Z"
-          fill={`url(#sh-${gid})`}
-        />
-        {/* Solapa V */}
-        <path
-          d="M44 83 Q50 92 56 83"
-          fill="none" stroke={shirtDark} strokeWidth="1.5" strokeLinecap="round" opacity="0.4"
-        />
-
-        {/* Imagen de cara (cubre el círculo completo, se clipea) */}
+        {/* Imagen de cara */}
         <image
           href={faceUrl}
-          x="0" y="-4"
-          width="100" height="100"
+          x="0" y="-8"
+          width="100" height="108"
           clipPath={`url(#clip-${gid})`}
-          preserveAspectRatio="xMidYMid slice"
+          preserveAspectRatio="xMidYMid meet"
         />
 
-        {/* Logo del cliente sobre la ropa */}
+        {/* ── Ropa: cubre la zona inferior de la imagen ────────────────── */}
+
+        {/* Cuerpo principal de la camisa */}
+        <path
+          d="M-2 93 Q16 78 38 81 L44 88 L50 93 L56 88 L62 81 Q84 78 102 93 L102 102 L-2 102Z"
+          fill={`url(#sh-${gid})`}
+        />
+
+        {/* Solapa izquierda (más oscura, da profundidad de saco) */}
+        <path
+          d="M-2 93 Q16 78 38 81 L44 88 L50 93 Q40 88 28 82 Q14 79 -2 93Z"
+          fill={`url(#sl-${gid})`}
+          opacity="0.55"
+        />
+
+        {/* Solapa derecha */}
+        <path
+          d="M102 93 Q84 78 62 81 L56 88 L50 93 Q60 88 72 82 Q86 79 102 93Z"
+          fill={`url(#sl-${gid})`}
+          opacity="0.55"
+        />
+
+        {/* Línea de cuello / collar */}
+        <path
+          d="M44 88 Q50 97 56 88"
+          fill="none"
+          stroke={adjust(brandColor, -60)}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.4"
+        />
+
+        {/* Sombra de cuello sobre la ropa */}
+        <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
+
+        {/* ── Logo del cliente ──────────────────────────────────────────── */}
         {showLogo && (
           <image
             href={logoUrl!}
-            x="33" y="77"
-            width="34" height="18"
-            clipPath={`url(#logo-${gid})`}
+            x="34" y="78"
+            width="32" height="16"
+            clipPath={`url(#logo-clip-${gid})`}
             preserveAspectRatio="xMidYMid meet"
           />
         )}
 
-        {/* Boca animada cuando habla (encima de la imagen) */}
-        {isSpeaking && (
-          <ellipse
-            cx="50" cy="62"
-            rx="6" ry="2.8"
-            fill="rgba(160,80,60,0.55)"
-            style={{ animation: "aa-talk 0.25s ease-in-out infinite alternate", transformOrigin: "50px 62px" }}
-          />
+        {/* ── Waveform bars cuando habla ───────────────────────────────── */}
+        {showWave && (
+          <g>
+            <rect x="36" y="88" width="3.5" height="5"   rx="1.5" fill="white" opacity="0.85"
+              style={{ animation: "aa-bar 0.7s ease-in-out 0.00s infinite alternate", transformOrigin: "37.75px 93px" }} />
+            <rect x="42" y="86" width="3.5" height="7"   rx="1.5" fill="white" opacity="0.9"
+              style={{ animation: "aa-bar 0.7s ease-in-out 0.14s infinite alternate", transformOrigin: "43.75px 93px" }} />
+            <rect x="48" y="87" width="3.5" height="6"   rx="1.5" fill="white" opacity="0.9"
+              style={{ animation: "aa-bar 0.7s ease-in-out 0.07s infinite alternate", transformOrigin: "49.75px 93px" }} />
+            <rect x="54" y="85" width="3.5" height="8"   rx="1.5" fill="white" opacity="0.9"
+              style={{ animation: "aa-bar 0.7s ease-in-out 0.21s infinite alternate", transformOrigin: "55.75px 93px" }} />
+            <rect x="60" y="88" width="3.5" height="5"   rx="1.5" fill="white" opacity="0.85"
+              style={{ animation: "aa-bar 0.7s ease-in-out 0.35s infinite alternate", transformOrigin: "61.75px 93px" }} />
+          </g>
         )}
       </svg>
 
       <style>{`
-        @keyframes aa-talk {
-          from { transform: scaleY(0.5); }
-          to   { transform: scaleY(1.8); }
+        /* Idle: float suave */
+        @keyframes aa-float {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-4px); }
+        }
+
+        /* Speaking: micro-pulso */
+        @keyframes aa-pulse {
+          0%, 100% { transform: scale(1); }
+          50%       { transform: scale(1.025); }
+        }
+
+        /* Waveform bars */
+        @keyframes aa-bar {
+          from { transform: scaleY(0.35); }
+          to   { transform: scaleY(1); }
         }
       `}</style>
     </div>
