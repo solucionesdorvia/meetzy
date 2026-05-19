@@ -10,6 +10,7 @@ import {
   Link as LinkIcon,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Sparkles,
   X,
 } from "lucide-react";
@@ -687,6 +688,16 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
             <div className={stepHeaderPad}>
               <h2 className="font-syne text-base font-bold tracking-[-0.02em] text-[var(--text-primary)]">Nuevo agente</h2>
               <p className="mt-1 text-xs font-light leading-relaxed text-[var(--text-tertiary)]">Configurá tu agente en minutos</p>
+              {dirty && macroStep < 4 ? (
+                <button
+                  type="button"
+                  onClick={resetWizard}
+                  className="mt-3 flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] transition-colors duration-150 hover:text-[var(--accent)]"
+                >
+                  <RotateCcw className="size-3" />
+                  Empezar de cero
+                </button>
+              ) : null}
             </div>
             <nav className={`flex flex-1 flex-col ${stepNavPad}`} aria-label="Pasos">
               {stepMeta.map((s, idx) => {
