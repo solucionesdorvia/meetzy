@@ -26,6 +26,7 @@ const FALLBACK_SUGGESTIONS: CharacterSuggestion[] = [
   { id: "cat",          emoji: "🐱", title: "Gato elegante",          description: "Sofisticado y memorable.",                         archetype: "cat",          promptHint: "sleek anthropomorphic cat, elegant pose",                   gradientFrom: "#8b5cf6", gradientTo: "#6d28d9" },
   { id: "rocket",       emoji: "🚀", title: "Cohete",                 description: "Dinámico y futurista. Ideal para tech/startups.",  archetype: "rocket",       promptHint: "cute rocket mascot with friendly face on the window",        gradientFrom: "#0ea5e9", gradientTo: "#0369a1" },
   { id: "star",         emoji: "⭐", title: "Estrella",               description: "Brillante y positivo. Universal.",                 archetype: "star",         promptHint: "cute golden star mascot with arms and expressive face",      gradientFrom: "#f97316", gradientTo: "#c2410c" },
+  { id: "car",          emoji: "🚗", title: "Auto animado",           description: "Perfecto para negocios automotrices.",              archetype: "car",          promptHint: "cute animated cartoon car mascot with big headlight eyes",   gradientFrom: "#dc2626", gradientTo: "#991b1b" },
 ];
 
 export async function POST(req: Request) {
@@ -61,7 +62,7 @@ Respondé siempre en JSON con esta estructura exacta:
       "emoji": string (un emoji representativo),
       "title": string (nombre del personaje en español, max 30 chars),
       "description": string (por qué encaja con este negocio, max 80 chars, en rioplatense),
-      "archetype": string (uno de: human_male, human_female, dog, cat, rabbit, fox, panda, bear, orange, apple, cup, star, rocket, diamond),
+      "archetype": string (uno de: human_male, human_female, dog, cat, rabbit, fox, panda, bear, orange, apple, cup, star, rocket, diamond, car),
       "promptHint": string (frase descriptiva en inglés para el prompt de imagen, max 100 chars),
       "gradientFrom": string (color hex que represente al personaje),
       "gradientTo": string (color hex más oscuro/complementario)
@@ -77,6 +78,8 @@ Reglas:
 - Para comida/café: taza/fruta/persona chef
 - Para legal/finanzas: persona profesional
 - Para educación: persona, libro, estrella
+- Para autos/automotriz/taller/concesionaria: auto (car), persona mecánico
+- Para transporte/logística: cohete, auto (car), persona
 - Los prompts en inglés deben ser descriptivos del personaje específico`,
         },
         {
@@ -95,7 +98,7 @@ Sugerí 6 personajes únicos e ideales para el avatar de IA de este negocio.`,
     // Sanitize: map any invalid archetype to the closest valid one
     const VALID_ARCHETYPES = new Set([
       "human_male", "human_female", "dog", "cat", "rabbit", "fox",
-      "panda", "bear", "orange", "apple", "cup", "star", "rocket", "diamond",
+      "panda", "bear", "orange", "apple", "cup", "star", "rocket", "diamond", "car",
     ]);
     const ARCHETYPE_MAP: Record<string, string> = {
       robot: "rocket", human: "human_male", woman: "human_female",
@@ -103,6 +106,8 @@ Sugerí 6 personajes únicos e ideales para el avatar de IA de este negocio.`,
       wolf: "fox", lion: "bear", tiger: "cat", bird: "star",
       fish: "dog", owl: "cat", penguin: "panda", koala: "panda",
       fox_animal: "fox", bunny: "rabbit",
+      vehicle: "car", truck: "car", bus: "car", motorcycle: "car",
+      auto: "car", automobile: "car", coche: "car",
     };
     const suggestions = raw.map((s) => ({
       ...s,
