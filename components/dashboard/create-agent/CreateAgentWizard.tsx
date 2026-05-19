@@ -1711,7 +1711,7 @@ function StepAvatarPick({
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Logo <span className="normal-case font-normal">(opcional)</span></p>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-4 text-center transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]">
               <span className="text-sm text-[var(--text-secondary)]">Subir logo · o arrastrá acá</span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">PNG o SVG · fondo transparente</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">PNG, JPG, WebP · los colores se detectan automáticamente</span>
               <input
                 type="file"
                 accept="image/*"
@@ -1725,10 +1725,13 @@ function StepAvatarPick({
                     const r = await fetch("/api/onboarding/upload-logo", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ imageBase64: data }),
+                      body: JSON.stringify({ imageBase64: data, mimeType: f.type }),
                     });
-                    const j = (await r.json()) as { url?: string };
+                    const j = (await r.json()) as { url?: string; brandColor?: string; brandColor2?: string };
                     if (j.url) setLogoUrl(j.url);
+                    // Auto-fill brand colors extracted from the logo
+                    if (j.brandColor) setBrandColor(j.brandColor);
+                    if (j.brandColor2) setBrandColor2(j.brandColor2);
                   };
                   reader.readAsDataURL(f);
                 }}

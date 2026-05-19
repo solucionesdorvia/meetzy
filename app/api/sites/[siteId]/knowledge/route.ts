@@ -40,12 +40,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sit
     content?: string;
     type?: string;
     sourceUrl?: string;
+    fileBase64?: string;
+    mimeType?: string;
+    filename?: string;
   };
 
   let title = (body.title ?? "").trim();
   let content = (body.content ?? "").trim();
   const type = body.type ?? "text";
   const sourceUrl = body.sourceUrl?.trim() ?? null;
+
+  // File type: extract text from uploaded document
+  if (type === "file" && body.fileBase64) {
+    try {
+      const { extractTextFromFile } = await import("@/lib/file-extractor");
+      const buffer = Buffer.from(body.fileBase64, "base64");
+      const extracted = await extractTextFromFile(buffer, body.mimeType ?? "", body.filename ?? "");
+      if (!title) title = body.filename ?? "Documento";
+      content = extracted;
+    } catch (e) {
+      return NextResponse.json({ error: `No se pudo extraer texto: ${(e as Error).message}` }, { status: 422 });
+    }
+  }
 
   // URL type: scrape and extract text
   if (type === "url" && sourceUrl) {

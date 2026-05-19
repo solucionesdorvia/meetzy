@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Trash2, Plus, Globe, FileText, HelpCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { useState, useTransition, useRef } from "react";
+import { Trash2, Plus, Globe, FileText, HelpCircle, ChevronDown, ChevronUp, Loader2, Upload, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface KnowledgeEntry {
@@ -24,6 +24,7 @@ const TYPE_CONFIG = {
   text: { icon: FileText, label: "Texto", color: "text-[var(--accent)]" },
   url: { icon: Globe, label: "URL", color: "text-[#34d399]" },
   faq: { icon: HelpCircle, label: "FAQ", color: "text-[#f97316]" },
+  file: { icon: Upload, label: "Archivo", color: "text-[#a78bfa]" },
 } as const;
 
 type EntryType = keyof typeof TYPE_CONFIG;
@@ -39,14 +40,33 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [fileData, setFileData] = useState<{ base64: string; mimeType: string; filename: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const atLimit = entries.length >= limit;
+
+  function handleFileSelect(file: File) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      const base64 = result.split(",")[1] ?? "";
+      setFileData({ base64, mimeType: file.type, filename: file.name });
+      if (!title) setTitle(file.name.replace(/\.[^.]+$/, ""));
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function handleAdd() {
     setError("");
     startTransition(async () => {
       const body: Record<string, string> = { type };
-      if (type === "url") {
+      if (type === "file") {
+        if (!fileData) { setError("Seleccioná un archivo."); return; }
+        body.fileBase64 = fileData.base64;
+        body.mimeType = fileData.mimeType;
+        body.filename = fileData.filename;
+        body.title = title || fileData.filename;
+      } else if (type === "url") {
         body.sourceUrl = url;
         body.title = title;
       } else {
@@ -68,6 +88,7 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
       setTitle("");
       setContent("");
       setUrl("");
+      setFileData(null);
       setShowForm(false);
     });
   }
@@ -120,7 +141,7 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
         <div className="rounded-[var(--radius-lg)] border border-[var(--accent-border)] bg-[var(--accent-subtle)] p-5 space-y-4">
           {/* Type selector */}
           <div className="flex gap-2 flex-wrap">
-            {(["text", "url", "faq"] as EntryType[]).map((t) => {
+            {(["text", "url", "faq", "file"] as EntryType[]).map((t) => {
               const cfg = TYPE_CONFIG[t];
               return (
                 <button
@@ -163,6 +184,49 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
                 />
               </div>
             </>
+          ) : type === "file" ? (
+            <div className="space-y-3">
+              <div
+                className="flex flex-col items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--accent-border)] bg-[var(--bg-surface)] p-8 gap-3 cursor-pointer hover:border-[var(--accent)] transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file) handleFileSelect(file);
+                }}
+              >
+                <FileUp className="size-8 text-[var(--accent)]" />
+                {fileData ? (
+                  <p className="text-[13px] font-medium text-[var(--text-primary)]">{fileData.filename}</p>
+                ) : (
+                  <>
+                    <p className="text-[13px] text-[var(--text-secondary)]">Arrastrá un archivo o hacé clic para seleccionar</p>
+                    <p className="text-[11px] text-[var(--text-tertiary)]">PDF, DOCX, TXT, CSV, MD, JSON</p>
+                  </>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.doc,.txt,.csv,.md,.json"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="dash-label">Título (opcional)</label>
+                <input
+                  type="text"
+                  className="dash-input"
+                  placeholder="Se usa el nombre del archivo si no se especifica"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+            </div>
           ) : (
             <>
               <div className="space-y-1">
@@ -205,7 +269,7 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
             </Button>
             <Button
               variant="ghost"
-              onClick={() => { setShowForm(false); setError(""); }}
+              onClick={() => { setShowForm(false); setError(""); setFileData(null); }}
               disabled={isPending}
             >
               Cancelar
