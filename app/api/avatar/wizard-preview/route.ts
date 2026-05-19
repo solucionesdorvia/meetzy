@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDbUser } from "@/lib/auth";
 import { isFalConfigured, generateFluxAvatarImage } from "@/lib/fal";
-import { buildWizardPrompt } from "@/lib/avatar-prompt-builder";
+import { buildWizardPrompt, buildStarterPrompt } from "@/lib/avatar-prompt-builder";
 import { avatarPreviewIpRatelimit } from "@/lib/redis";
 
 const BodySchema = z.object({
   archetype: z.string().min(1),
-  promptHint: z.string().min(1).max(400),
+  // Pro: promptHint from AI suggestion. Starter: omit — uses archetype + styleModifier.
+  promptHint: z.string().min(1).max(400).optional(),
   businessName: z.string().min(1).max(120),
   agentName: z.string().min(1).max(80),
   brandColor: z.string().min(1),
   brandColor2: z.string().optional(),
   clothingText: z.string().max(40).optional(),
+  styleModifier: z.string().max(40).optional(),
   variation: z.number().int().min(0).max(20).optional(),
 });
 
@@ -39,15 +41,27 @@ export async function POST(req: Request) {
     }
 
     const d = parsed.data;
-    const prompt = buildWizardPrompt({
-      promptHint: d.promptHint,
-      brandColor: d.brandColor,
-      brandColor2: d.brandColor2,
-      businessName: d.businessName,
-      agentName: d.agentName,
-      clothingText: d.clothingText,
-      variation: d.variation,
-    });
+
+    // Build prompt: starter uses archetype + styleModifier; pro uses promptHint.
+    const prompt = d.promptHint
+      ? buildWizardPrompt({
+          promptHint: d.promptHint,
+          brandColor: d.brandColor,
+          brandColor2: d.brandColor2,
+          businessName: d.businessName,
+          agentName: d.agentName,
+          clothingText: d.clothingText,
+          styleModifier: d.styleModifier,
+          variation: d.variation,
+        })
+      : buildStarterPrompt({
+          archetype: d.archetype as "human_male" | "human_female",
+          brandColor: d.brandColor,
+          brandColor2: d.brandColor2,
+          businessName: d.businessName,
+          styleModifier: d.styleModifier,
+          variation: d.variation,
+        });
 
     const { url, error } = await generateFluxAvatarImage(prompt, d.variation);
     if (!url) {

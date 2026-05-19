@@ -23,6 +23,7 @@ import type { PrimaryChar } from "@/components/onboarding/resolve-archetype";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AvatarArchetype } from "@/lib/avatar-prompt-builder";
+import { STYLE_MODIFIER_LABELS } from "@/lib/avatar-prompt-builder";
 import { useProductToast } from "@/components/providers/product-toast";
 
 type CharacterSuggestion = {
@@ -108,6 +109,7 @@ type Persisted = {
   aiSuggestions: CharacterSuggestion[];
   selectedSuggestion: CharacterSuggestion | null;
   clothingText: string;
+  styleModifier: string;
 };
 
 export type CreateAgentWizardProps = {
@@ -154,6 +156,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [clothingText, setClothingText] = useState("");
+  const [styleModifier, setStyleModifier] = useState("amigable");
   const [createdSiteId, setCreatedSiteId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [finalizingAvatar, setFinalizingAvatar] = useState(false);
@@ -195,6 +198,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       aiSuggestions,
       selectedSuggestion,
       clothingText,
+      styleModifier,
     };
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -223,6 +227,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     aiSuggestions,
     selectedSuggestion,
     clothingText,
+    styleModifier,
   ]);
 
   useEffect(() => {
@@ -251,6 +256,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       if (Array.isArray(p.aiSuggestions)) setAiSuggestions(p.aiSuggestions);
       if (p.selectedSuggestion) setSelectedSuggestion(p.selectedSuggestion);
       if (typeof p.clothingText === "string") setClothingText(p.clothingText);
+      if (typeof p.styleModifier === "string") setStyleModifier(p.styleModifier);
     } catch {
       /* ignore */
     }
@@ -351,6 +357,35 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }
   }
 
+  async function runStarterPreview(variation: number, options?: { soft?: boolean }) {
+    if (!archetype) { push("Elegí un personaje.", "warning"); return; }
+    setGenBusy(true);
+    if (!options?.soft) { setGenFallback(false); setAvatarUrl(null); }
+    try {
+      const r = await fetch("/api/avatar/wizard-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          archetype,
+          businessName: businessName || "tu marca",
+          agentName: agentName || "Asistente",
+          brandColor,
+          brandColor2,
+          styleModifier: styleModifier || undefined,
+          variation,
+        }),
+      });
+      const j = (await r.json()) as { previewUrl?: string; error?: string };
+      if (j.previewUrl) { setAvatarUrl(j.previewUrl); setGenFallback(false); }
+      else { setGenFallback(true); setAvatarUrl(null); push(j.error ?? "Usamos el preview local ✓", "info"); }
+    } catch {
+      setGenFallback(true);
+      push("Generación en pausa — usando preview local.", "warning");
+    } finally {
+      setGenBusy(false);
+    }
+  }
+
   async function runWizardPreview(variation: number, options?: { soft?: boolean }) {
     if (!selectedSuggestion) {
       push("Elegí un personaje antes de generar.", "warning");
@@ -373,6 +408,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
           brandColor,
           brandColor2,
           clothingText: clothingText || undefined,
+          styleModifier: styleModifier || undefined,
           variation,
         }),
       });
@@ -394,10 +430,8 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   }
 
   function startGenerationPhase() {
-    if (!selectedSuggestion) {
-      push("Elegí un personaje antes de generar.", "warning");
-      return;
-    }
+    if (!isPro && !archetype) { push("Elegí un personaje.", "warning"); return; }
+    if (isPro && !selectedSuggestion) { push("Elegí un personaje antes de generar.", "warning"); return; }
     if (isGuest) {
       persist();
       window.location.href = `/sign-up?redirect_url=${encodeURIComponent("/dashboard/new")}`;
@@ -411,12 +445,10 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }, 2800);
     void (async () => {
       try {
-        await runWizardPreview(localRegen);
+        if (isPro) await runWizardPreview(localRegen);
+        else await runStarterPreview(localRegen);
       } finally {
-        if (genTimer.current) {
-          window.clearInterval(genTimer.current);
-          genTimer.current = null;
-        }
+        if (genTimer.current) { window.clearInterval(genTimer.current); genTimer.current = null; }
         setAvatarMicro("done");
       }
     })();
@@ -528,7 +560,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setPrimary(null); setSubtype(""); setBrandColor("#6366f1"); setBrandColor2("#8b5cf6");
     setLogoUrl(null); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
     setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false);
-    setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText("");
+    setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText(""); setStyleModifier("amigable");
     setRightTransition("in");
   }
 
@@ -542,8 +574,10 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     if (macroStep === 2) return Boolean(agentType);
     if (macroStep === 3) {
       if (!isPro) {
-        // Starter: just need a base character selected
-        return Boolean(archetype);
+        // Starter: need character selected + generation done
+        if (!archetype) return false;
+        if (avatarMicro !== "done") return false;
+        return true;
       }
       // Pro/Elite: need AI suggestion + generation done
       if (!selectedSuggestion) return false;
@@ -568,20 +602,15 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   ]);
 
   const canPickGenerate = useMemo(() => {
-    if (!isPro) return false;
+    if (!isPro) return Boolean(archetype) && avatarMicro === "pick";
     if (!selectedSuggestion) return false;
     return avatarMicro === "pick";
-  }, [isPro, selectedSuggestion, avatarMicro]);
+  }, [isPro, archetype, selectedSuggestion, avatarMicro]);
 
   function onPrimaryAction() {
     if (macroStep === 1) { goNext(); return; }
     if (macroStep === 2) { goNext(); return; }
     if (macroStep === 3) {
-      if (!isPro) {
-        // Starter: skip generation, go straight to create
-        void finalizeSite();
-        return;
-      }
       if (avatarMicro === "pick") { startGenerationPhase(); return; }
       if (avatarMicro === "done") { void finalizeSite(); }
     }
@@ -745,9 +774,11 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                       businessName={businessName}
                       agentName={agentName}
                       primary={primary}
-                      setPrimary={(p) => { setPrimary(p); setSubtype(p === "human" ? "" : p); }}
+                      setPrimary={(p) => { setPrimary(p); setSubtype(p === "human" ? "" : p); setAvatarMicro("pick"); setAvatarUrl(null); }}
                       subtype={subtype}
-                      setSubtype={setSubtype}
+                      setSubtype={(v) => { setSubtype(v); setAvatarMicro("pick"); setAvatarUrl(null); }}
+                      styleModifier={styleModifier}
+                      setStyleModifier={(v) => { setStyleModifier(v); setAvatarMicro("pick"); setAvatarUrl(null); }}
                       aiSuggestions={aiSuggestions}
                       suggestBusy={suggestBusy}
                       suggestError={suggestError}
@@ -930,26 +961,19 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                   disabled={
                     (macroStep === 1 && !canProceedForward) ||
                     (macroStep === 2 && !canProceedForward) ||
-                    (macroStep === 3 && !isPro && (!canProceedForward || finalizingAvatar)) ||
-                    (macroStep === 3 && isPro && avatarMicro === "generating") ||
-                    (macroStep === 3 && isPro && avatarMicro === "pick" && !canPickGenerate) ||
-                    (macroStep === 3 && isPro && avatarMicro === "done")
+                    (macroStep === 3 && avatarMicro === "generating") ||
+                    (macroStep === 3 && avatarMicro === "pick" && !canPickGenerate) ||
+                    (macroStep === 3 && avatarMicro === "done")
                   }
                   className="dash-focus-ring gap-2 rounded-[10px] bg-[var(--accent)] px-5 hover:bg-[var(--accent-hover)]"
                   onClick={() => onPrimaryAction()}
                 >
-                  {macroStep === 3 && !isPro ? (
-                    finalizingAvatar ? (
-                      <><Loader2 className="size-4 animate-spin" /> Creando…</>
-                    ) : (
-                      <>Crear mi agente <ArrowRight className="size-4" /></>
-                    )
-                  ) : macroStep === 3 && isPro && avatarMicro === "pick" ? (
+                  {macroStep === 3 && avatarMicro === "pick" ? (
                     <>
                       <Sparkles className="size-4" />
                       Generar mi avatar
                     </>
-                  ) : macroStep === 3 && isPro && avatarMicro === "generating" ? (
+                  ) : macroStep === 3 && avatarMicro === "generating" ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
                       Generando…
@@ -1294,6 +1318,30 @@ const STARTER_CHARS = [
   { primary: "human" as PrimaryChar, subtype: "female", emoji: "👩", label: "Mujer" },
 ] as const;
 
+function StyleChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Estilo del personaje</p>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(STYLE_MODIFIER_LABELS).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onChange(key)}
+            className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-all duration-150 dash-focus-ring ${
+              value === key
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_0_12px_var(--accent-glow)]"
+                : "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:border-[var(--accent-border)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function StepAvatarPick({
   isPro,
   businessName,
@@ -1302,6 +1350,8 @@ function StepAvatarPick({
   setPrimary,
   subtype,
   setSubtype,
+  styleModifier,
+  setStyleModifier,
   aiSuggestions,
   suggestBusy,
   suggestError,
@@ -1327,6 +1377,8 @@ function StepAvatarPick({
   setPrimary: (p: PrimaryChar) => void;
   subtype: string;
   setSubtype: (v: string) => void;
+  styleModifier: string;
+  setStyleModifier: (v: string) => void;
   aiSuggestions: CharacterSuggestion[];
   suggestBusy: boolean;
   suggestError: string | null;
@@ -1413,14 +1465,27 @@ function StepAvatarPick({
           </div>
         </div>
 
+        {/* Style modifier chips */}
+        <StyleChips value={styleModifier} onChange={setStyleModifier} />
+
         {/* Upgrade nudge */}
         <div className="flex items-start gap-3 rounded-xl border border-[var(--accent-border)] bg-[var(--accent-subtle)] px-4 py-3">
           <Sparkles className="mt-0.5 size-4 shrink-0 text-[var(--accent)]" />
           <p className="text-[12px] leading-relaxed text-[var(--text-secondary)]">
-            Con <span className="font-semibold text-[var(--accent)]">Plan Pro</span> podés generar un avatar IA único con tu personaje, marca y logo.{" "}
+            Con <span className="font-semibold text-[var(--accent)]">Plan Pro</span> podés generar un personaje totalmente personalizado con IA.{" "}
             <a href="/pricing" className="underline text-[var(--accent)] hover:text-[var(--accent-hover)]">Ver planes →</a>
           </p>
         </div>
+
+        {avatarMicro === "generating" ? (
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 md:hidden">
+            <Loader2 className="size-5 shrink-0 animate-spin text-[var(--accent)]" />
+            <div>
+              <p className="text-sm font-medium text-[var(--text-primary)]">Generando avatar…</p>
+              <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{genMessage}</p>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -1551,6 +1616,9 @@ function StepAvatarPick({
               </label>
             </div>
           </div>
+
+          {/* Style modifier chips */}
+          <StyleChips value={styleModifier} onChange={setStyleModifier} />
 
           {/* Clothing text */}
           <div>

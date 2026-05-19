@@ -2,6 +2,34 @@
  * Prompts for fal.ai — 3D cartoon / Duolingo-adjacent expressive mascots.
  */
 
+/**
+ * Minimal style modifiers — adjust tone/vibe without changing
+ * the base format (3D cartoon, same composition, transparent bg).
+ */
+export const STYLE_MODIFIERS: Record<string, string> = {
+  profesional:
+    "polished business-professional look, confident composed posture, subtle formal accessories, sharp refined expression",
+  amigable:
+    "warm friendly smile, open approachable posture, casual relaxed style, inviting expression",
+  juvenil:
+    "youthful energetic vibe, trendy casual outfit, enthusiastic bright expression, dynamic upbeat pose",
+  divertido:
+    "playful fun personality, expressive animated pose, cheerful exaggerated smile, lively character energy",
+  elegante:
+    "sleek minimalist styling, refined clean look, calm composed expression, understated sophisticated details",
+  tecnico:
+    "tech-savvy smart look, subtle tech accessories, focused analytical expression, modern professional style",
+};
+
+export const STYLE_MODIFIER_LABELS: Record<string, string> = {
+  profesional: "Profesional",
+  amigable: "Amigable",
+  juvenil: "Juvenil",
+  divertido: "Divertido",
+  elegante: "Elegante",
+  tecnico: "Técnico",
+};
+
 export const AVATAR_STYLE_BASE = `3D cartoon character, Duolingo style, expressive and friendly,
 high quality render, soft neutral lighting,
 transparent background, isolated on transparent, no background, no backdrop,
@@ -104,7 +132,24 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
     .join(" ");
 }
 
-/** Builds prompt for wizard flow — uses promptHint directly as the character descriptor. */
+/** Builds prompt for starter plan — uses existing archetype with optional style modifier. */
+export function buildStarterPrompt(config: {
+  archetype: "human_male" | "human_female";
+  brandColor: string;
+  brandColor2?: string;
+  businessName: string;
+  styleModifier?: string;
+  variation?: number;
+}): string {
+  const typeLine = TYPE_PROMPTS[config.archetype];
+  const styleLine = config.styleModifier ? (STYLE_MODIFIERS[config.styleModifier] ?? "") : "";
+  const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
+  const varSuffix =
+    config.variation && config.variation > 0 ? `Unique variation ${config.variation}, slightly different pose.` : "";
+  return [AVATAR_STYLE_BASE, typeLine, styleLine, colors, varSuffix].filter(Boolean).join(" ");
+}
+
+/** Builds prompt for wizard flow (Pro) — uses promptHint from AI suggestion + optional style modifier. */
 export function buildWizardPrompt(config: {
   promptHint: string;
   brandColor: string;
@@ -112,8 +157,10 @@ export function buildWizardPrompt(config: {
   businessName: string;
   agentName: string;
   clothingText?: string;
+  styleModifier?: string;
   variation?: number;
 }): string {
+  const styleLine = config.styleModifier ? (STYLE_MODIFIERS[config.styleModifier] ?? "") : "";
   const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
   const clothingHint = config.clothingText
     ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
@@ -124,6 +171,7 @@ export function buildWizardPrompt(config: {
   return [
     AVATAR_STYLE_BASE,
     config.promptHint,
+    styleLine,
     colors,
     clothingHint,
     varSuffix,
