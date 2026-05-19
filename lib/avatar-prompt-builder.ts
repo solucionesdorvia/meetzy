@@ -30,11 +30,11 @@ export const STYLE_MODIFIER_LABELS: Record<string, string> = {
   tecnico: "Técnico",
 };
 
-export const AVATAR_STYLE_BASE = `3D cartoon character, Duolingo style, expressive and friendly,
-high quality render, soft neutral lighting,
-transparent background, isolated on transparent, no background, no backdrop,
-cut-out character subject only, alpha channel, PNG-friendly, professional mascot,
-centered composition, big expressive eyes, smooth glossy textures`.replace(/\n/g, " ");
+export const AVATAR_STYLE_BASE = `professional 3D cartoon mascot character, Duolingo-style expressive character design,
+vibrant smooth 3D render, soft studio lighting, character centered in frame,
+completely transparent background, PNG with alpha channel, no background elements,
+big expressive eyes, smooth glossy skin texture, friendly approachable expression,
+full character visible from head to waist, high quality 3D illustration`.replace(/\n/g, " ");
 
 /**
  * Agent-type visual modifiers applied to human archetypes.
@@ -86,8 +86,8 @@ export interface AvatarPromptConfig {
 }
 
 const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
-  human_male: `young friendly male mascot character, wearing a hoodie and shirt in brand colors`,
-  human_female: `young friendly female mascot character, wearing a hoodie and shirt in brand colors`,
+  human_male: `young friendly male mascot character, wearing a modern hoodie or shirt in the brand colors, neat hair, genuine warm smile`,
+  human_female: `young friendly female mascot character, wearing a modern top or hoodie in the brand colors, neat styled hair, warm approachable smile`,
   dog: `cute anthropomorphic friendly dog mascot, expressive face, wearing a small bandana in brand colors`,
   cat: `cute anthropomorphic friendly cat mascot, big eyes, wearing a collar with brand colored accent`,
   rabbit: `cute anthropomorphic bunny mascot, soft ears, playful pose, brand colored vest`,
