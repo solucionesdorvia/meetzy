@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
-import AvatarConfigurator from "@/components/dashboard/AvatarConfigurator";
+import AvatarCreatorWizard from "@/components/avatar/AvatarCreatorWizard";
 import SiteSubnav from "@/components/dashboard/SiteSubnav";
 import { Button } from "@/components/ui/button";
 
@@ -75,7 +75,18 @@ export default async function AvatarPage({ params }: { params: Promise<{ siteId:
           </div>
         </div>
       ) : (
-        <AvatarConfigurator site={site} />
+        <AvatarCreatorWizard
+          site={{
+            siteId: site.siteId,
+            name: site.name,
+            agentName: site.agentName,
+            brandColor: site.brandColor,
+            brandColor2: site.brandColor2,
+            logoUrl: site.logoUrl,
+            avatarImageUrl: site.avatarImageUrl,
+            avatarGenerations: site.avatarGenerations,
+          }}
+        />
       )}
     </div>
   );

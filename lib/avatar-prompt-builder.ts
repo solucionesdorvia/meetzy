@@ -51,6 +51,10 @@ export interface AvatarPromptConfig {
   agentType?: string;
   /** Extra variation suffix for regenerations */
   variation?: number;
+  /** Direct AI-suggested hint — used verbatim in prompt (overrides generic TYPE_PROMPTS) */
+  promptHint?: string;
+  /** Short text to weave into clothing (e.g. business name) — best-effort, FLUX may vary */
+  clothingText?: string;
 }
 
 const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
@@ -72,13 +76,17 @@ const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
   const isHuman = config.archetype === "human_male" || config.archetype === "human_female";
-  const typeLine = TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male;
+  const typeLine = config.promptHint ?? (TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male);
   const agentTypeModifier =
-    isHuman && config.agentType ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "") : "";
+    !config.promptHint && isHuman && config.agentType
+      ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "")
+      : "";
   const logoInstruction = config.logoUrl
     ? `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`
     : "";
-  const nameHint = `Subtle name energy for "${config.agentName}" and business "${config.businessName}" — cute, not text in the image.`;
+  const clothingHint = config.clothingText
+    ? `Character's clothing or collar includes "${config.clothingText}" naturally integrated as an embroidered patch or name badge.`
+    : `Subtle identity energy for "${config.businessName}" — expressive character, no literal text in the image.`;
   const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
   const varSuffix =
     config.variation && config.variation > 0 ? ` Unique variation ${config.variation}, slightly different pose.` : "";
@@ -89,8 +97,36 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
     agentTypeModifier,
     colors,
     logoInstruction,
-    nameHint,
+    clothingHint,
     varSuffix.trim(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Builds prompt for wizard flow — uses promptHint directly as the character descriptor. */
+export function buildWizardPrompt(config: {
+  promptHint: string;
+  brandColor: string;
+  brandColor2?: string;
+  businessName: string;
+  agentName: string;
+  clothingText?: string;
+  variation?: number;
+}): string {
+  const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
+  const clothingHint = config.clothingText
+    ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
+    : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`;
+  const varSuffix =
+    config.variation && config.variation > 0 ? `Unique variation ${config.variation}, slightly different pose.` : "";
+
+  return [
+    AVATAR_STYLE_BASE,
+    config.promptHint,
+    colors,
+    clothingHint,
+    varSuffix,
   ]
     .filter(Boolean)
     .join(" ");

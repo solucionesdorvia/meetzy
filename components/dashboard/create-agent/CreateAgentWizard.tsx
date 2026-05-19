@@ -25,6 +25,17 @@ import { Input } from "@/components/ui/input";
 import type { AvatarArchetype } from "@/lib/avatar-prompt-builder";
 import { useProductToast } from "@/components/providers/product-toast";
 
+type CharacterSuggestion = {
+  id: string;
+  emoji: string;
+  title: string;
+  description: string;
+  archetype: string;
+  promptHint: string;
+  gradientFrom: string;
+  gradientTo: string;
+};
+
 const LS_KEY = "meetzy-create-agent-wizard-v1";
 
 const SWATCHES = ["#6366f1", "#ec4899", "#f97316", "#22c55e", "#0ea5e9", "#eab308", "#a855f7", "#14b8a6"];
@@ -94,6 +105,9 @@ type Persisted = {
   genFallback: boolean;
   createdSiteId: string | null;
   analyzeSkipped: boolean;
+  aiSuggestions: CharacterSuggestion[];
+  selectedSuggestion: CharacterSuggestion | null;
+  clothingText: string;
 };
 
 export type CreateAgentWizardProps = {
@@ -134,11 +148,20 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [genFallback, setGenFallback] = useState(false);
   const [localRegen, setLocalRegen] = useState(0);
+
+  const [aiSuggestions, setAiSuggestions] = useState<CharacterSuggestion[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<CharacterSuggestion | null>(null);
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [clothingText, setClothingText] = useState("");
   const [createdSiteId, setCreatedSiteId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [rightTransition, setRightTransition] = useState<"in" | "out">("in");
 
-  const archetype = useMemo(() => resolveArchetype(primary, subtype), [primary, subtype]);
+  const archetype = useMemo(() => {
+    if (selectedSuggestion) return selectedSuggestion.archetype as AvatarArchetype;
+    return resolveArchetype(primary, subtype);
+  }, [selectedSuggestion, primary, subtype]);
   const agentTypeLabel = useMemo(() => AGENT_CARDS.find((x) => x.id === agentType)?.title ?? "Agente", [agentType]);
 
   const suggestions = useMemo(() => {
@@ -166,6 +189,9 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       genFallback,
       createdSiteId,
       analyzeSkipped,
+      aiSuggestions,
+      selectedSuggestion,
+      clothingText,
     };
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -191,6 +217,9 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     genFallback,
     createdSiteId,
     analyzeSkipped,
+    aiSuggestions,
+    selectedSuggestion,
+    clothingText,
   ]);
 
   useEffect(() => {
@@ -216,6 +245,9 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       if (typeof p.genFallback === "boolean") setGenFallback(p.genFallback);
       if (typeof p.createdSiteId === "string") setCreatedSiteId(p.createdSiteId);
       if (typeof p.analyzeSkipped === "boolean") setAnalyzeSkipped(p.analyzeSkipped);
+      if (Array.isArray(p.aiSuggestions)) setAiSuggestions(p.aiSuggestions);
+      if (p.selectedSuggestion) setSelectedSuggestion(p.selectedSuggestion);
+      if (typeof p.clothingText === "string") setClothingText(p.clothingText);
     } catch {
       /* ignore */
     }
@@ -231,6 +263,13 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     };
   }, []);
 
+  useEffect(() => {
+    if (macroStep === 3 && aiSuggestions.length === 0 && !suggestBusy && !suggestError) {
+      void fetchSuggestions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [macroStep]);
+
   function advanceCharPrimary(p: PrimaryChar) {
     setPrimary(p);
     setSubtype("");
@@ -243,9 +282,10 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
 
   const previewStage = useMemo(() => {
     if (avatarUrl && !genFallback) return "image" as const;
+    if (selectedSuggestion) return "ai-suggestion" as const;
     if (primary && archetype) return "svg" as const;
     return "placeholder" as const;
-  }, [avatarUrl, genFallback, primary, archetype]);
+  }, [avatarUrl, genFallback, selectedSuggestion, primary, archetype]);
 
   async function runAnalyze() {
     let normalized = url.trim();
@@ -289,9 +329,28 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }
   }
 
-  async function runGeneration(variation: number, options?: { soft?: boolean }) {
-    if (!archetype) {
-      push("Completá el personaje antes de generar.", "warning");
+  async function fetchSuggestions() {
+    setSuggestBusy(true);
+    setSuggestError(null);
+    try {
+      const r = await fetch("/api/avatar/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessName: businessName || "mi negocio" }),
+      });
+      const j = (await r.json()) as { suggestions?: CharacterSuggestion[]; error?: string };
+      if (j.suggestions?.length) setAiSuggestions(j.suggestions);
+      else setSuggestError(j.error ?? "No pudimos generar sugerencias.");
+    } catch {
+      setSuggestError("Error de red al sugerir personajes.");
+    } finally {
+      setSuggestBusy(false);
+    }
+  }
+
+  async function runWizardPreview(variation: number, options?: { soft?: boolean }) {
+    if (!selectedSuggestion) {
+      push("Elegí un personaje antes de generar.", "warning");
       return;
     }
     setGenBusy(true);
@@ -299,31 +358,29 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       setGenFallback(false);
       setAvatarUrl(null);
     }
-    const t0 = Date.now();
     try {
-      const r = await fetch("/api/avatar/generate", {
+      const r = await fetch("/api/avatar/wizard-preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          archetype,
-          brandColor,
-          brandColor2,
+          archetype: selectedSuggestion.archetype,
+          promptHint: selectedSuggestion.promptHint,
           businessName: businessName || "tu marca",
           agentName: agentName || "Asistente",
-          logoUrl: logoUrl || undefined,
+          brandColor,
+          brandColor2,
+          clothingText: clothingText || undefined,
           variation,
         }),
       });
-      const j = (await r.json()) as { avatarUrl?: string | null; fallback?: boolean; error?: string };
-      const wait = Math.max(0, 2800 - (Date.now() - t0));
-      await new Promise((res) => setTimeout(res, wait));
-      if (j.avatarUrl) {
-        setAvatarUrl(j.avatarUrl);
-        setGenFallback(Boolean(j.fallback));
+      const j = (await r.json()) as { previewUrl?: string; error?: string };
+      if (j.previewUrl) {
+        setAvatarUrl(j.previewUrl);
+        setGenFallback(false);
       } else {
         setGenFallback(true);
         setAvatarUrl(null);
-        push(j.error ? "Usamos el preview vectorial ✓" : "Seguimos con el avatar ilustrado local.", "info");
+        push(j.error ?? "Usamos el preview vectorial ✓", "info");
       }
     } catch {
       setGenFallback(true);
@@ -334,8 +391,8 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   }
 
   function startGenerationPhase() {
-    if (!archetype) {
-      push("Elegí tipo de personaje y variante.", "warning");
+    if (!selectedSuggestion) {
+      push("Elegí un personaje antes de generar.", "warning");
       return;
     }
     if (isGuest) {
@@ -351,7 +408,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }, 2800);
     void (async () => {
       try {
-        await runGeneration(localRegen);
+        await runWizardPreview(localRegen);
       } finally {
         if (genTimer.current) {
           window.clearInterval(genTimer.current);
@@ -438,6 +495,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setPrimary(null); setSubtype(""); setBrandColor("#6366f1"); setBrandColor2("#8b5cf6");
     setLogoUrl(null); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
     setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false);
+    setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText("");
     setRightTransition("in");
   }
 
@@ -450,8 +508,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }
     if (macroStep === 2) return Boolean(agentType);
     if (macroStep === 3) {
-      if (!primary) return false;
-      if (needsSecondary(primary) && !canProceedSecondary(primary, subtype)) return false;
+      if (!selectedSuggestion) return false;
       if (avatarMicro !== "done") return false;
       return true;
     }
@@ -466,16 +523,14 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     systemPrompt,
     agentType,
     welcomeMessage,
-    primary,
-    subtype,
+    selectedSuggestion,
     avatarMicro,
   ]);
 
   const canPickGenerate = useMemo(() => {
-    if (!primary) return false;
-    if (needsSecondary(primary) && !canProceedSecondary(primary, subtype)) return false;
+    if (!selectedSuggestion) return false;
     return avatarMicro === "pick";
-  }, [primary, subtype, avatarMicro]);
+  }, [selectedSuggestion, avatarMicro]);
 
   function onPrimaryAction() {
     if (macroStep === 1) {
@@ -651,16 +706,26 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                   ) : null}
                   {macroStep === 3 ? (
                     <StepAvatarPick
-                      primary={primary}
-                      advanceCharPrimary={advanceCharPrimary}
-                      subtype={subtype}
-                      setSubtype={setSubtype}
+                      businessName={businessName}
+                      aiSuggestions={aiSuggestions}
+                      suggestBusy={suggestBusy}
+                      suggestError={suggestError}
+                      selectedSuggestion={selectedSuggestion}
+                      setSelectedSuggestion={(s) => {
+                        setSelectedSuggestion(s);
+                        setAvatarMicro("pick");
+                        setAvatarUrl(null);
+                        setGenFallback(false);
+                      }}
+                      onRefetchSuggestions={() => void fetchSuggestions()}
                       brandColor={brandColor}
                       setBrandColor={setBrandColor}
                       brandColor2={brandColor2}
                       setBrandColor2={setBrandColor2}
                       logoUrl={logoUrl}
                       setLogoUrl={setLogoUrl}
+                      clothingText={clothingText}
+                      setClothingText={setClothingText}
                       avatarMicro={avatarMicro}
                       genBusy={genBusy}
                       genMessage={genMessage}
@@ -681,43 +746,93 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
               </div>
 
               {macroStep === 3 ? (
-                <div
-                  className={`hidden w-[220px] flex-none border-l border-[var(--border-subtle)] bg-[var(--bg-base)] p-5 md:block`}
-                >
+                <div className="hidden w-[220px] flex-none border-l border-[var(--border-subtle)] bg-[var(--bg-base)] p-5 md:block">
                   <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">Preview</p>
-                  <div
-                    className="mt-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-4"
-                  >
-                    <AvatarSvgPreview
-                      stage={previewStage}
-                      archetype={archetype}
-                      brandColor={brandColor}
-                      businessName={businessName}
-                      agentName={agentName || "Tu agente"}
-                      agentTypeLabel={agentTypeLabel}
-                      logoUrl={logoUrl}
-                      imageUrl={avatarUrl}
-                    />
+                  <div className="mt-4 space-y-3">
+                    {/* Avatar preview area */}
+                    <div className="overflow-hidden rounded-xl border border-[var(--border-default)]">
+                      {previewStage === "image" && avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={avatarUrl} alt="" className="aspect-square w-full object-cover" />
+                      ) : previewStage === "ai-suggestion" && selectedSuggestion ? (
+                        <div
+                          className="flex aspect-square w-full flex-col items-center justify-center gap-2"
+                          style={{ background: `linear-gradient(135deg, ${selectedSuggestion.gradientFrom}, ${selectedSuggestion.gradientTo})` }}
+                        >
+                          <span className="text-5xl leading-none">{selectedSuggestion.emoji}</span>
+                          <span className="text-[11px] font-semibold text-white/90">{selectedSuggestion.title}</span>
+                        </div>
+                      ) : (
+                        <AvatarSvgPreview
+                          stage={previewStage === "ai-suggestion" ? "placeholder" : previewStage}
+                          archetype={archetype}
+                          brandColor={brandColor}
+                          businessName={businessName}
+                          agentName={agentName || "Tu agente"}
+                          agentTypeLabel={agentTypeLabel}
+                          logoUrl={logoUrl}
+                          imageUrl={avatarUrl}
+                        />
+                      )}
+                    </div>
+
+                    {/* Launcher bubble mockup */}
+                    {selectedSuggestion ? (
+                      <div className="relative h-20 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
+                        <div className="absolute inset-x-3 top-2.5 space-y-1 opacity-20">
+                          <div className="h-1.5 w-3/4 rounded-full bg-[var(--text-tertiary)]" />
+                          <div className="h-1.5 w-1/2 rounded-full bg-[var(--text-tertiary)]" />
+                        </div>
+                        <div className="absolute bottom-2.5 right-2.5 flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold text-white" style={{ background: brandColor }}>
+                            <span className="size-1 rounded-full bg-emerald-400" />En vivo
+                          </div>
+                          <div
+                            className="flex size-10 items-center justify-center overflow-hidden rounded-full shadow-md"
+                            style={{
+                              background: avatarUrl ? "transparent" : `linear-gradient(135deg, ${selectedSuggestion.gradientFrom}, ${selectedSuggestion.gradientTo})`,
+                              boxShadow: `0 0 0 2px ${brandColor}60`,
+                            }}
+                          >
+                            {avatarUrl && !genFallback ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={avatarUrl} alt="" className="size-full object-cover" />
+                            ) : (
+                              <span className="text-lg leading-none">{selectedSuggestion.emoji}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {avatarMicro === "done" ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-2">
                         <Button
                           type="button"
                           variant="secondary"
                           size="sm"
-                          className="gap-1"
+                          className="w-full gap-1"
                           disabled={localRegen >= 3 || genBusy}
                           onClick={() => {
                             const next = localRegen + 1;
                             setLocalRegen(next);
-                            void runGeneration(next, { soft: true });
+                            setAvatarMicro("generating");
+                            void runWizardPreview(next, { soft: true }).then(() => setAvatarMicro("done"));
                           }}
                         >
                           <RefreshCw className="size-3.5" />
                           Regenerar
                         </Button>
-                        <Button type="button" size="sm" className="gap-1 bg-[var(--success)] hover:bg-[var(--success)]/90" onClick={() => void finalizeSite()}>
+                        <Button type="button" size="sm" className="w-full gap-1 bg-[var(--success)] hover:bg-[var(--success)]/90" onClick={() => void finalizeSite()}>
                           Me encanta ✓
                         </Button>
+                      </div>
+                    ) : null}
+
+                    {avatarMicro === "generating" ? (
+                      <div className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2.5">
+                        <Loader2 className="size-4 shrink-0 animate-spin text-[var(--accent)]" />
+                        <p className="text-[11px] text-[var(--text-secondary)]">{genMessage}</p>
                       </div>
                     ) : null}
                   </div>
@@ -1118,30 +1233,40 @@ function StepAgent({
 }
 
 function StepAvatarPick({
-  primary,
-  advanceCharPrimary,
-  subtype,
-  setSubtype,
+  businessName,
+  aiSuggestions,
+  suggestBusy,
+  suggestError,
+  selectedSuggestion,
+  setSelectedSuggestion,
+  onRefetchSuggestions,
   brandColor,
   setBrandColor,
   brandColor2,
   setBrandColor2,
   logoUrl,
   setLogoUrl,
+  clothingText,
+  setClothingText,
   avatarMicro,
   genBusy,
   genMessage,
 }: {
-  primary: PrimaryChar | null;
-  advanceCharPrimary: (p: PrimaryChar) => void;
-  subtype: string;
-  setSubtype: (v: string) => void;
+  businessName: string;
+  aiSuggestions: CharacterSuggestion[];
+  suggestBusy: boolean;
+  suggestError: string | null;
+  selectedSuggestion: CharacterSuggestion | null;
+  setSelectedSuggestion: (s: CharacterSuggestion | null) => void;
+  onRefetchSuggestions: () => void;
   brandColor: string;
   setBrandColor: (v: string) => void;
   brandColor2: string;
   setBrandColor2: (v: string) => void;
   logoUrl: string | null;
   setLogoUrl: (v: string | null) => void;
+  clothingText: string;
+  setClothingText: (v: string) => void;
   avatarMicro: "pick" | "generating" | "done";
   genBusy: boolean;
   genMessage: string;
@@ -1150,120 +1275,96 @@ function StepAvatarPick({
     <div className="mt-5 space-y-5 pb-6 md:pb-0">
       <div>
         <h3 className="font-syne text-[21px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">¿Cómo se ve tu agente?</h3>
-        <p className="mt-1.5 text-sm text-[var(--text-secondary)]">Personaje, color de marca y logo opcional.</p>
+        <p className="mt-1.5 text-sm text-[var(--text-secondary)]">Elegí un personaje diseñado para tu negocio.</p>
       </div>
 
-      {!primary ? (
+      {/* Phase 1: Suggestion selection */}
+      {!selectedSuggestion ? (
         <div>
-          <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Tipo de personaje</p>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            {(
-              [
-                ["human", "👤", "Humano"],
-                ["perro", "🐶", "Perro"],
-                ["gato", "🐱", "Gato"],
-                ["fruta", "🍊", "Fruta"],
-                ["objeto", "☕", "Objeto"],
-                ["animal", "🦊", "Animal"],
-              ] as const
-            ).map(([id, emoji, label]) => (
-              <SelectableTile
-                key={id}
-                selected={primary === id}
-                onClick={() => advanceCharPrimary(id as PrimaryChar)}
-                className="min-h-[100px] py-4"
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+              Personajes sugeridos para{" "}
+              <span className="text-[var(--text-secondary)]">{businessName || "tu negocio"}</span>
+            </p>
+            {aiSuggestions.length > 0 && !suggestBusy ? (
+              <button
+                type="button"
+                onClick={onRefetchSuggestions}
+                className="flex items-center gap-1 text-[11px] text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
               >
-                <span className="text-2xl">{emoji}</span>
-                <span className="text-xs font-medium text-[var(--text-primary)]">{label}</span>
-              </SelectableTile>
-            ))}
+                <RefreshCw className="size-3" />
+                Nuevas
+              </button>
+            ) : null}
           </div>
-        </div>
-      ) : null}
 
-      {primary === "human" ? (
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-tertiary)]">Variante</p>
-          <div className="grid grid-cols-2 gap-3">
-            {(
-              [
-                ["male", "♂", "Hombre"],
-                ["female", "♀", "Mujer"],
-              ] as const
-            ).map(([id, sym, label]) => (
-              <SelectableTile
-                key={id}
-                selected={subtype === id}
-                onClick={() => setSubtype(id)}
-                className="min-h-[100px]"
+          {suggestBusy ? (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex min-h-[110px] animate-pulse flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3"
+                />
+              ))}
+            </div>
+          ) : suggestError ? (
+            <div className="rounded-xl border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.06)] px-4 py-4 text-center">
+              <p className="text-sm text-[var(--error)]">{suggestError}</p>
+              <button
+                type="button"
+                className="mt-2 text-xs font-medium text-[var(--accent)] underline"
+                onClick={onRefetchSuggestions}
               >
-                <span className="text-2xl">{sym}</span>
-                <span className="font-syne text-sm font-semibold">{label}</span>
-              </SelectableTile>
-            ))}
-          </div>
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {aiSuggestions.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelectedSuggestion(s)}
+                  className="group flex min-h-[110px] flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-transparent p-3 text-center transition-all duration-150 hover:scale-[1.02] hover:shadow-lg dash-focus-ring"
+                  style={{ background: `linear-gradient(135deg, ${s.gradientFrom}, ${s.gradientTo})` }}
+                >
+                  <span className="text-3xl leading-none drop-shadow">{s.emoji}</span>
+                  <span className="font-syne text-[12px] font-bold text-white drop-shadow-sm">{s.title}</span>
+                  <span className="line-clamp-2 text-[10px] leading-tight text-white/80">{s.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ) : null}
 
-      {primary === "fruta" ? (
-        <div className="grid grid-cols-2 gap-3">
-          {(
-            [
-              ["naranja", "🍊", "Naranja"],
-              ["manzana", "🍎", "Manzana"],
-            ] as const
-          ).map(([id, e, l]) => (
-            <SelectableTile key={id} selected={subtype === id} onClick={() => setSubtype(id)} className="py-5">
-              <span className="text-3xl">{e}</span>
-              <span className="text-sm text-[var(--text-primary)]">{l}</span>
-            </SelectableTile>
-          ))}
-        </div>
-      ) : null}
-
-      {primary === "objeto" ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2">
-          {(
-            [
-              ["taza", "☕", "Taza"],
-              ["estrella", "⭐", "Estrella"],
-              ["cohete", "🚀", "Cohete"],
-              ["diamante", "💎", "Diamante"],
-            ] as const
-          ).map(([id, e, l]) => (
-            <SelectableTile key={id} selected={subtype === id} onClick={() => setSubtype(id)} className="py-4">
-              <span className="text-2xl">{e}</span>
-              <span className="text-sm text-[var(--text-primary)]">{l}</span>
-            </SelectableTile>
-          ))}
-        </div>
-      ) : null}
-
-      {primary === "animal" ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {(
-            [
-              ["perro", "🐶", "Perro"],
-              ["gato", "🐱", "Gato"],
-              ["conejo", "🐰", "Conejo"],
-              ["zorro", "🦊", "Zorro"],
-              ["panda", "🐼", "Panda"],
-              ["oso", "🐻", "Oso"],
-            ] as const
-          ).map(([id, e, l]) => (
-            <SelectableTile key={id} selected={subtype === id} onClick={() => setSubtype(id)} className="py-3">
-              <span className="text-xl sm:text-2xl">{e}</span>
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{l}</span>
-            </SelectableTile>
-          ))}
-        </div>
-      ) : null}
-
-      {primary &&
-      (!needsSecondary(primary) || (needsSecondary(primary) && canProceedSecondary(primary, subtype))) ? (
+      {/* Phase 2+: Selected character + brand controls */}
+      {selectedSuggestion ? (
         <>
+          {/* Selected character header */}
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3">
+            <div
+              className="flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl"
+              style={{ background: `linear-gradient(135deg, ${selectedSuggestion.gradientFrom}, ${selectedSuggestion.gradientTo})` }}
+            >
+              {selectedSuggestion.emoji}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-syne text-sm font-bold text-[var(--text-primary)]">{selectedSuggestion.title}</p>
+              <p className="line-clamp-1 text-[11px] text-[var(--text-tertiary)]">{selectedSuggestion.description}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedSuggestion(null)}
+              className="rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+          </div>
+
+          {/* Brand color */}
           <div>
-            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Color principal de tu marca</p>
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Color de marca</p>
             <div className="flex flex-wrap gap-3">
               {SWATCHES.map((c) => (
                 <button
@@ -1272,11 +1373,7 @@ function StepAvatarPick({
                   aria-label={c}
                   onClick={() => {
                     setBrandColor(c);
-                    try {
-                      setBrandColor2(Color(c).rotate(24).lighten(0.08).hex());
-                    } catch {
-                      setBrandColor2(c);
-                    }
+                    try { setBrandColor2(Color(c).rotate(24).lighten(0.08).hex()); } catch { setBrandColor2(c); }
                   }}
                   className={`size-10 rounded-xl border-2 transition-transform duration-150 ${
                     brandColor === c ? "scale-110 border-white" : "border-transparent hover:scale-105"
@@ -1293,20 +1390,30 @@ function StepAvatarPick({
                   onChange={(e) => {
                     const v = e.target.value;
                     setBrandColor(v);
-                    try {
-                      setBrandColor2(Color(v).rotate(24).lighten(0.08).hex());
-                    } catch {
-                      /* keep */
-                    }
+                    try { setBrandColor2(Color(v).rotate(24).lighten(0.08).hex()); } catch { /* keep */ }
                   }}
                 />
               </label>
             </div>
           </div>
 
+          {/* Clothing text */}
           <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Logo (opcional)</p>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-5 text-center transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Texto en la ropa <span className="normal-case font-normal">(opcional)</span></p>
+            <input
+              type="text"
+              value={clothingText}
+              onChange={(e) => setClothingText(e.target.value.slice(0, 40))}
+              placeholder={`Ej. ${businessName ? businessName.split(" ")[0] : "TuMarca"} Team`}
+              maxLength={40}
+              className="dash-focus-ring w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            />
+          </div>
+
+          {/* Logo */}
+          <div>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Logo <span className="normal-case font-normal">(opcional)</span></p>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-4 text-center transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]">
               <span className="text-sm text-[var(--text-secondary)]">Subir logo · o arrastrá acá</span>
               <span className="text-[11px] text-[var(--text-tertiary)]">PNG o SVG · fondo transparente</span>
               <input
@@ -1335,20 +1442,21 @@ function StepAvatarPick({
               <div className="mt-2 flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={logoUrl} alt="" className="size-10 rounded-lg object-contain" />
-                <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>
-                  Quitar
-                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>Quitar</Button>
               </div>
             ) : null}
           </div>
         </>
       ) : null}
 
+      {/* Mobile generating state */}
       {avatarMicro === "generating" ? (
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 md:hidden">
-          <p className="text-sm font-medium text-[var(--text-primary)]">Generando avatar…</p>
-          <p className="mt-1 text-xs text-[var(--text-tertiary)]">{genMessage}</p>
-          {genBusy ? <Loader2 className="mt-4 size-6 animate-spin text-[var(--accent)]" /> : null}
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 md:hidden">
+          <Loader2 className="size-5 shrink-0 animate-spin text-[var(--accent)]" />
+          <div>
+            <p className="text-sm font-medium text-[var(--text-primary)]">Generando avatar…</p>
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{genMessage}</p>
+          </div>
         </div>
       ) : null}
     </div>
