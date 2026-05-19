@@ -50,7 +50,7 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
           <div className="anim-slide-up hero-copy">
             <div className="badge" style={{ marginBottom: 20, display: "inline-flex" }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--c-accent)", animation: "glow-pulse 2s ease-in-out infinite" }} />
-              El agente IA que atiende tu web — 24/7, con tu marca
+              El agente que los conoce — antes de que hablen
             </div>
 
             <h1 className="display display-xl" style={{ marginBottom: 20 }}>
@@ -61,8 +61,8 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
             </h1>
 
             <p className="hero-lead">
-              Creá un agente con tu avatar, tu marca y tu contenido.
-              Lo embebés en tu web en 10 minutos y convierte visitantes en clientes mientras vos dormís.
+              Tu agente sabe qué páginas vieron, qué los frenó y qué les interesó.
+              Convierte en el momento — y cuando no, tenés todo para el seguimiento posterior.
             </p>
 
             <div className="hero-btns">
