@@ -694,7 +694,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--bg-surface)]/80 backdrop-blur-sm">
                       <Loader2 className="size-8 animate-spin text-[var(--accent)]" />
                       <p className="text-[12px] font-medium text-[var(--text-secondary)]">
-                        {saving ? "Procesando y guardando…" : "Generando con IA…"}
+                        {saving ? "Procesando y guardando…" : "Generando tu avatar…"}
                       </p>
                     </div>
                   )}
