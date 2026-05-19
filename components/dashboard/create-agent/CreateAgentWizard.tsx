@@ -273,11 +273,11 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   }, []);
 
   useEffect(() => {
-    if (macroStep === 3 && aiSuggestions.length === 0 && !suggestBusy && !suggestError) {
+    if (isPro && macroStep === 3 && aiSuggestions.length === 0 && !suggestBusy && !suggestError) {
       void fetchSuggestions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [macroStep]);
+  }, [macroStep, isPro]);
 
   function advanceCharPrimary(p: PrimaryChar) {
     setPrimary(p);
@@ -574,10 +574,8 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     if (macroStep === 2) return Boolean(agentType);
     if (macroStep === 3) {
       if (!isPro) {
-        // Starter: need character selected + generation done
-        if (!archetype) return false;
-        if (avatarMicro !== "done") return false;
-        return true;
+        // Starter: only needs archetype selected — no generation required
+        return Boolean(archetype);
       }
       // Pro/Elite: need AI suggestion + generation done
       if (!selectedSuggestion) return false;
@@ -602,15 +600,22 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   ]);
 
   const canPickGenerate = useMemo(() => {
-    if (!isPro) return Boolean(archetype) && avatarMicro === "pick";
+    // Only applies to Pro — Starter goes directly to finalizeSite
+    if (!isPro) return false;
     if (!selectedSuggestion) return false;
     return avatarMicro === "pick";
-  }, [isPro, archetype, selectedSuggestion, avatarMicro]);
+  }, [isPro, selectedSuggestion, avatarMicro]);
 
   function onPrimaryAction() {
     if (macroStep === 1) { goNext(); return; }
     if (macroStep === 2) { goNext(); return; }
     if (macroStep === 3) {
+      if (!isPro) {
+        // Starter: go directly to finalizeSite without fal-ai
+        void finalizeSite();
+        return;
+      }
+      // Pro/Elite: fal-ai generation flow
       if (avatarMicro === "pick") { startGenerationPhase(); return; }
       if (avatarMicro === "done") { void finalizeSite(); }
     }
@@ -961,19 +966,26 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                   disabled={
                     (macroStep === 1 && !canProceedForward) ||
                     (macroStep === 2 && !canProceedForward) ||
-                    (macroStep === 3 && avatarMicro === "generating") ||
-                    (macroStep === 3 && avatarMicro === "pick" && !canPickGenerate) ||
-                    (macroStep === 3 && avatarMicro === "done")
+                    (macroStep === 3 && !isPro && !canProceedForward) ||
+                    (macroStep === 3 && isPro && avatarMicro === "generating") ||
+                    (macroStep === 3 && isPro && avatarMicro === "pick" && !canPickGenerate) ||
+                    (macroStep === 3 && isPro && avatarMicro === "done") ||
+                    (macroStep === 3 && isPro && finalizingAvatar)
                   }
                   className="dash-focus-ring gap-2 rounded-[10px] bg-[var(--accent)] px-5 hover:bg-[var(--accent-hover)]"
                   onClick={() => onPrimaryAction()}
                 >
-                  {macroStep === 3 && avatarMicro === "pick" ? (
+                  {macroStep === 3 && !isPro ? (
+                    <>
+                      Crear mi agente
+                      <ArrowRight className="size-4" />
+                    </>
+                  ) : macroStep === 3 && isPro && avatarMicro === "pick" ? (
                     <>
                       <Sparkles className="size-4" />
                       Generar mi avatar
                     </>
-                  ) : macroStep === 3 && avatarMicro === "generating" ? (
+                  ) : macroStep === 3 && isPro && avatarMicro === "generating" ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
                       Generando…
@@ -1465,9 +1477,6 @@ function StepAvatarPick({
           </div>
         </div>
 
-        {/* Style modifier chips */}
-        <StyleChips value={styleModifier} onChange={setStyleModifier} />
-
         {/* Upgrade nudge */}
         <div className="flex items-start gap-3 rounded-xl border border-[var(--accent-border)] bg-[var(--accent-subtle)] px-4 py-3">
           <Sparkles className="mt-0.5 size-4 shrink-0 text-[var(--accent)]" />
@@ -1476,16 +1485,6 @@ function StepAvatarPick({
             <a href="/pricing" className="underline text-[var(--accent)] hover:text-[var(--accent-hover)]">Ver planes →</a>
           </p>
         </div>
-
-        {avatarMicro === "generating" ? (
-          <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 md:hidden">
-            <Loader2 className="size-5 shrink-0 animate-spin text-[var(--accent)]" />
-            <div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">Generando avatar…</p>
-              <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{genMessage}</p>
-            </div>
-          </div>
-        ) : null}
       </div>
     );
   }
