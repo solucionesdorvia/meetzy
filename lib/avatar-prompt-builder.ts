@@ -32,8 +32,8 @@ export const STYLE_MODIFIER_LABELS: Record<string, string> = {
 
 export const AVATAR_STYLE_BASE = `professional 3D cartoon mascot character, Duolingo-style expressive character design,
 vibrant smooth 3D render, soft diffused lighting with no hard shadows,
-completely isolated character on pure transparent background, no floor, no shadow, no ground, no reflection,
-PNG with alpha channel, character floating centered in frame, no background elements whatsoever,
+character on solid lime green background (#00FF00), uniform flat lime green backdrop, no gradients, no shadows on floor,
+character floating centered in frame, no floor, no ground, no reflection, no environment elements,
 big expressive eyes, smooth glossy skin texture, friendly approachable expression,
 full character visible from head to waist, high quality 3D illustration,
 clean edges, no artifacts, no cut-off limbs, fully intact character`.replace(/\n/g, " ");

@@ -9,12 +9,10 @@ const MODEL_MAP = {
   object: "fal-ai/flux-pro",
 } as const;
 
-const TRANSPARENT_RULES = `transparent background, no background, isolated character, PNG with alpha channel,
-isolated on transparent, no background elements, cut out character, alpha channel, PNG format.`;
+const CHROMA_BG_RULES = `solid lime green background (#00FF00), uniform flat lime green backdrop, no gradients, no shadows on floor, no reflections, no floor elements.`;
 
-/** fal / GPT must never imply a solid or colored backdrop — only full transparency. */
-const NEVER_BACKGROUND = `Never use: white background, solid background, studio backdrop,
-gradient background, floor, wall, environment, sky, or any colored fill behind the subject.`;
+/** Background that BiRefNet can trivially key out */
+const NEVER_DARK_BG = `Never use: dark background, gradient background, complex environment, floor shadows, wall, sky, or any patterned fill behind the subject. Always use solid lime green (#00FF00).`;
 
 export type { AvatarConfig, GeneratedAvatar } from "@/lib/avatar-config";
 
@@ -123,6 +121,33 @@ export async function removeBackground(imageBuffer: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
+/**
+ * AI-powered background removal using fal-ai/birefnet.
+ * Falls back to pixel-threshold if the API call fails.
+ */
+async function removeBackgroundWithBirefnet(imageUrl: string): Promise<Buffer> {
+  try {
+    configure();
+    type BirefnetResult = { data: { image: { url: string } } };
+    const res = (await fal.subscribe("fal-ai/birefnet", {
+      input: {
+        image_url: imageUrl,
+        model: "General Use (Light)",
+        operating_resolution: "1024x1024",
+        output_format: "png",
+      },
+    })) as BirefnetResult;
+    const transparentUrl = res.data?.image?.url;
+    if (!transparentUrl) throw new Error("BiRefNet returned no image");
+    return fetchUrlToBuffer(transparentUrl);
+  } catch (e) {
+    console.warn("[avatar] BiRefNet failed, falling back to pixel threshold:", e);
+    // fallback: fetch the original and use pixel threshold
+    const rawBuf = await fetchUrlToBuffer(imageUrl);
+    return removeBackground(rawBuf);
+  }
+}
+
 async function compositeLogoOnAvatarBuffer(avatarPngBuffer: Buffer, logoUrl: string): Promise<Buffer> {
   const logoRes = await fetch(logoUrl);
   if (!logoRes.ok) throw new Error("Failed to download logo image");
@@ -162,8 +187,8 @@ function fallbackPrompt(config: AvatarConfig): string {
     config.style === "cartoon"
       ? "3D cartoon style, Pixar/Duolingo inspired, big expressive eyes, smooth glossy textures, vibrant."
       : "Photorealistic, soft neutral lighting, professional headshot quality.",
-    TRANSPARENT_RULES,
-    NEVER_BACKGROUND,
+    CHROMA_BG_RULES,
+    NEVER_DARK_BG,
     "centered composition, no text, no watermarks, single character.",
   ]
     .filter(Boolean)
@@ -186,8 +211,8 @@ Convert avatar configuration into a single technical image prompt.
 Reply with ONLY the prompt, no quotes or explanations.
 The prompt must be in English.
 Maximum 120 words.
-The character MUST be on a fully transparent background (alpha). ${NEVER_BACKGROUND}
-Always include: ${TRANSPARENT_RULES}`,
+The character MUST be on a solid lime green background (#00FF00) for chroma-key removal. ${NEVER_DARK_BG}
+Always include: ${CHROMA_BG_RULES}`,
       },
       {
         role: "user",
@@ -201,8 +226,8 @@ ${config.freeDescription ? `Extra details: ${config.freeDescription}` : ""}
 
 MANDATORY:
 - The t-shirt chest must be clean and unprinted (no logos, no text on the shirt itself)
-- Character must be on a fully transparent background — ${TRANSPARENT_RULES}
-- ${NEVER_BACKGROUND}
+- Character must be on a solid lime green background (#00FF00) — ${CHROMA_BG_RULES}
+- ${NEVER_DARK_BG}
 - No text, no watermarks, single character, centered composition.`,
       },
     ],
@@ -269,8 +294,7 @@ export async function generateAvatarPipelineFromFalUrl(
   options: { requireCloudinary?: boolean; cloudinaryPublicIdBase?: string } = {},
 ): Promise<{ imageUrl: string; buffer: Buffer }> {
   const requireCloudinary = options.requireCloudinary ?? false;
-  const rawBuf = await fetchUrlToBuffer(falUrl);
-  let transparentBuf = await removeBackground(rawBuf);
+  let transparentBuf = await removeBackgroundWithBirefnet(falUrl);
 
   if (config.logoUrl?.trim()) {
     try {
