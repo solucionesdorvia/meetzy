@@ -50,7 +50,7 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
           <div className="anim-slide-up hero-copy">
             <div className="badge" style={{ marginBottom: 20, display: "inline-flex" }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--c-accent)", animation: "glow-pulse 2s ease-in-out infinite" }} />
-              La primera web que realmente entiende a cada visitante
+              El agente IA que atiende tu web — 24/7, con tu marca
             </div>
 
             <h1 className="display display-xl" style={{ marginBottom: 20 }}>
@@ -61,8 +61,8 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
             </h1>
 
             <p className="hero-lead">
-              Meetzy ve lo que cada visitante hace en tu sitio.
-              Cuando habla, ya los conoce.
+              Creá un agente con tu avatar, tu marca y tu contenido.
+              Lo embebés en tu web en 10 minutos y convierte visitantes en clientes mientras vos dormís.
             </p>
 
             <div className="hero-btns">

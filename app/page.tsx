@@ -13,20 +13,20 @@ import TrustStrip from "@/components/landing/TrustStrip";
 import { Stats, MidFunnelCTA } from "@/components/landing/LandingStats";
 
 export const metadata: Metadata = {
-  title: "Meetzy — Tu web observa, entiende y responde",
+  title: "Meetzy — Agentes IA para tu web, con tu marca",
   description:
-    "Meetzy le da a tu web la capacidad de entender a cada visitante y responder con contexto real. Behavioral tracking + agente IA. Setup en 10 minutos.",
+    "Creá agentes IA personalizados para tu web en minutos. Con tu avatar, tus colores y tu contenido. Sin código — setup en 10 minutos.",
   openGraph: {
-    title: "Meetzy — Tu web observa, entiende y responde",
-    description: "El primer agente de IA que conoce a tu visitante antes de que hable.",
+    title: "Meetzy — Agentes IA para tu web, con tu marca",
+    description: "Creá un agente IA con tu marca y tu contenido. Lo embebés en tu web en minutos y convierte visitantes en clientes 24/7.",
     url: "https://meetzy.ai",
     siteName: "Meetzy",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Meetzy — Tu web observa, entiende y responde",
-    description: "El primer agente de IA que conoce a tu visitante antes de que hable.",
+    title: "Meetzy — Agentes IA para tu web, con tu marca",
+    description: "Creá un agente IA con tu marca y tu contenido. Lo embebés en tu web en minutos y convierte visitantes en clientes 24/7.",
   },
 };
 
