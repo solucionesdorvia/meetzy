@@ -6,7 +6,7 @@ buildCommand = "npm run build"
 # Un solo string: Railway ejecuta migraciones antes del tráfico (evita columnas faltantes en Site).
 preDeployCommand = "npx prisma migrate deploy"
 startCommand = "npm start"
-healthcheckPath = "/"
-healthcheckTimeout = 60
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
