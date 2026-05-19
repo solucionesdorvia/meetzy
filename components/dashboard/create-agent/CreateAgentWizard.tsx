@@ -160,6 +160,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [clothingText, setClothingText] = useState("");
   const [styleModifier, setStyleModifier] = useState("amigable");
+  const [colorToast, setColorToast] = useState(false);
   const [createdSiteId, setCreatedSiteId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [finalizingAvatar, setFinalizingAvatar] = useState(false);
@@ -573,6 +574,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setLogoUrl(null); setLogoMode("badge"); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
     setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false); setCreatingAgent(false);
     setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText(""); setStyleModifier("amigable");
+    setColorToast(false);
     setRightTransition("in");
   }
 
@@ -830,6 +832,8 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                       avatarMicro={avatarMicro}
                       genBusy={genBusy}
                       genMessage={genMessage}
+                      colorToast={colorToast}
+                      setColorToast={setColorToast}
                     />
                   ) : null}
                   {macroStep === 4 && createdSiteId ? (
@@ -1422,6 +1426,8 @@ function StepAvatarPick({
   avatarMicro,
   genBusy,
   genMessage,
+  colorToast,
+  setColorToast,
 }: {
   isPro: boolean;
   businessName: string;
@@ -1451,6 +1457,8 @@ function StepAvatarPick({
   avatarMicro: "pick" | "generating" | "done";
   genBusy: boolean;
   genMessage: string;
+  colorToast: boolean;
+  setColorToast: (v: boolean) => void;
 }) {
   /* ── Starter: color picker + 4 base characters ── */
   if (!isPro) {
@@ -1745,6 +1753,10 @@ function StepAvatarPick({
                     // Auto-fill brand colors extracted from the logo
                     if (j.brandColor) setBrandColor(j.brandColor);
                     if (j.brandColor2) setBrandColor2(j.brandColor2);
+                    if (j.brandColor) {
+                      setColorToast(true);
+                      setTimeout(() => setColorToast(false), 3000);
+                    }
                   };
                   reader.readAsDataURL(f);
                 }}
@@ -1756,6 +1768,11 @@ function StepAvatarPick({
                 <img src={logoUrl} alt="" className="size-10 rounded-lg object-contain" />
                 <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>Quitar</Button>
               </div>
+            ) : null}
+            {colorToast ? (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#34d399]">
+                <span>✓</span> Colores detectados automáticamente del logo
+              </p>
             ) : null}
             {logoUrl ? (
               <div className="mt-3 space-y-2">

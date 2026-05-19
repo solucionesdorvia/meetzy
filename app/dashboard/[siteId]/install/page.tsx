@@ -124,6 +124,13 @@ export default async function SiteInstallPage({ params }: { params: Promise<{ si
           ))}
         </ul>
       </div>
+
+      <p className="mt-6 text-center text-[13px] text-[var(--text-tertiary)]">
+        ¿Necesitás más ayuda?{" "}
+        <a href="/docs" className="text-[var(--accent)] hover:underline">
+          Ver documentación completa →
+        </a>
+      </p>
     </div>
   );
 }

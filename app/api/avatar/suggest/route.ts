@@ -34,11 +34,11 @@ const FALLBACK_SUGGESTIONS: CharacterSuggestion[] = [
 export async function POST(req: Request) {
   try {
     const dbUser = await getDbUser();
-    if (!dbUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!dbUser) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
     const body = await req.json();
     const parsed = Schema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
 
     const { businessName, businessDescription } = parsed.data;
 

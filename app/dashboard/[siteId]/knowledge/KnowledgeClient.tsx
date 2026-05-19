@@ -265,7 +265,7 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
           <div className="flex gap-2">
             <Button onClick={() => void handleAdd()} disabled={isPending} className="gap-2">
               {isPending && <Loader2 className="size-4 animate-spin" />}
-              {type === "url" ? "Importar URL" : "Guardar"}
+              {isPending ? (type === "file" ? "Extrayendo texto…" : "Guardando…") : (type === "url" ? "Importar URL" : "Guardar")}
             </Button>
             <Button
               variant="ghost"

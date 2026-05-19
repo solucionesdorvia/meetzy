@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     const site = await prisma.site.findUnique({ where: { siteId: b.siteId } });
     if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
 
+    // Protected by conversationId+visitorId+siteId triple validation
     const conv = await prisma.conversation.findFirst({
       where: { id: b.conversationId, visitorId: b.visitorId, siteId: site.id },
       include: { messages: { where: { role: "user" }, orderBy: { createdAt: "asc" } } },

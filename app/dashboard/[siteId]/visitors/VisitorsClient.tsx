@@ -140,13 +140,15 @@ export default function VisitorsClient({
             👤
           </p>
           <p className="font-syne text-lg font-bold text-[var(--text-primary)]">Todavía no hay visitantes</p>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            Cuando el widget esté instalado y los usuarios chateen, vas a ver acá perfiles con intent, tiempo en sitio y
-            fuente de tráfico.
+          <p className="mt-2 max-w-sm text-[13px] text-[var(--text-secondary)]">
+            Cuando alguien use el widget en tu web, aparecerá acá con su perfil e intención de compra.
           </p>
-          <Button asChild className="mt-8">
-            <Link href={`/dashboard/${sitePublicId}/install`}>Ir a instalación</Link>
-          </Button>
+          <Link
+            href={`/dashboard/${sitePublicId}/install`}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--accent-border)] bg-[var(--accent-subtle)] px-4 py-2 text-[13px] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition-all"
+          >
+            Ver cómo instalar el widget →
+          </Link>
         </div>
       ) : (
         <div className="dash-table-wrap overflow-x-auto">

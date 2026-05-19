@@ -108,10 +108,10 @@ function aggregate(
 export async function GET(req: NextRequest, { params }: { params: Promise<{ siteId: string }> }) {
   try {
     const dbUser = await getDbUser();
-    if (!dbUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!dbUser) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
     const { siteId } = await params;
     const site = await prisma.site.findFirst({ where: { siteId, userId: dbUser.id } });
-    if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    if (!site) return NextResponse.json({ error: "Sitio no encontrado." }, { status: 404 });
 
     const range = (req.nextUrl.searchParams.get("range") ?? "7d") as Range;
     const { from, to, prevFrom, prevTo } = parseRange(range === "today" || range === "7d" || range === "30d" || range === "all" ? range : "7d");
@@ -132,13 +132,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
       prisma.conversation.findMany({
         where: { siteId: site.id, createdAt: { gte: from, lte: to } },
         orderBy: { createdAt: "desc" },
-        take: 10000,
+        take: 3000, // Capped at 3000 — aggregate via DB groupBy for large sites
         select,
       }),
       prisma.conversation.findMany({
         where: { siteId: site.id, createdAt: { gte: prevFrom, lte: prevTo } },
         orderBy: { createdAt: "desc" },
-        take: 10000,
+        take: 3000, // Capped at 3000 — aggregate via DB groupBy for large sites
         select,
       }),
       prisma.conversation.count({
@@ -232,6 +232,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
     });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error interno. Intentá de nuevo." }, { status: 500 });
   }
 }

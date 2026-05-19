@@ -481,6 +481,7 @@ class MeetzyWidget {
     ta.className = "chat-ta";
     ta.placeholder = `Preguntale a ${this.config.agentName}…`;
     ta.rows = 1;
+    ta.style.fontSize = "16px";
     ta.addEventListener("input", () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 88) + "px"; });
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -539,6 +540,8 @@ class MeetzyWidget {
     else { this.closeMessage(); this.openChat(); }
   }
 
+  private _outsideClickHandler: ((e: Event) => void) | null = null;
+
   private openChat(contextMessage?: string) {
     this.state = "chat";
     this.chatEl.classList.add("chat-open");
@@ -559,11 +562,29 @@ class MeetzyWidget {
     setTimeout(() => {
       (this.chatEl.querySelector(".chat-ta") as HTMLTextAreaElement | null)?.focus();
     }, 350);
+
+    // Close on outside click/tap (mobile-friendly)
+    if (this._outsideClickHandler) {
+      document.removeEventListener("pointerdown", this._outsideClickHandler, true);
+    }
+    this._outsideClickHandler = (e: Event) => {
+      const host = this.shadow.host;
+      if (host && !host.contains(e.target as Node)) {
+        this.closeChat();
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener("pointerdown", this._outsideClickHandler!, true);
+    }, 400);
   }
 
   private closeChat() {
     this.state = "idle";
     this.chatEl.classList.remove("chat-open");
+    if (this._outsideClickHandler) {
+      document.removeEventListener("pointerdown", this._outsideClickHandler, true);
+      this._outsideClickHandler = null;
+    }
   }
 
   private buildContextOpener(ctx: VisitorContext): string {
@@ -908,7 +929,7 @@ class MeetzyWidget {
 
       /* ── MOBILE ── */
       @media (max-width: 480px) {
-        .chat { position: fixed; inset: 0; width: 100vw; height: 100dvh; border-radius: 0; bottom: auto; right: auto; left: auto; }
+        .chat { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; bottom: auto; right: auto; left: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
         .speech { width: 220px; }
       }
     `;

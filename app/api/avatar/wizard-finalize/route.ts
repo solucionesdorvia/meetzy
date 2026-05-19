@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ avatarUrl: imageUrl });
   } catch (e) {
     console.error("[wizard-finalize]", e);
-    const msg = e instanceof Error ? e.message : "Internal error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[wizard-finalize] details:", e instanceof Error ? e.message : e);
+    return NextResponse.json({ error: "Error al procesar el avatar. Intentá de nuevo." }, { status: 500 });
   }
 }

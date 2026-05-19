@@ -12,17 +12,19 @@ function csvEscape(s: string): string {
 export async function GET(req: NextRequest, { params }: { params: Promise<{ siteId: string }> }) {
   try {
     const dbUser = await getDbUser();
-    if (!dbUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!dbUser) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
     const { siteId: publicSiteId } = await params;
     const site = await prisma.site.findFirst({
       where: { siteId: publicSiteId, userId: dbUser.id },
     });
-    if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    if (!site) return NextResponse.json({ error: "Sitio no encontrado." }, { status: 404 });
 
+    const format = req.nextUrl.searchParams.get("format");
+    const isExport = format === "csv";
     const rows = await prisma.conversation.findMany({
       where: { siteId: site.id, visitorEmail: { not: null } },
       orderBy: { updatedAt: "desc" },
-      take: 5000,
+      take: isExport ? 5000 : 500,
       select: {
         visitorEmail: true,
         visitorName: true,
@@ -33,8 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
       },
     });
 
-    const format = req.nextUrl.searchParams.get("format");
-    if (format === "csv") {
+    if (isExport) {
       const header = "email,name,company,intentScore,intentLabel,capturedAt";
       const lines = rows
         .filter((r) => r.visitorEmail)
@@ -69,6 +70,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
     });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error interno. Intentá de nuevo." }, { status: 500 });
   }
 }

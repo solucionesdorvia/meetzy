@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
     );
     if (!success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded. Try again later." },
+        { error: "Límite de solicitudes alcanzado. Intentá más tarde." },
         { status: 429 }
       );
     }
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
 
     if (!site || !site.isActive) {
       return NextResponse.json(
-        { error: "Site not found or inactive" },
+        { error: "Sitio no encontrado o inactivo." },
         { status: 404 }
       );
     }
@@ -322,10 +322,21 @@ export async function POST(req: NextRequest) {
       take: 20,
     });
 
-    const knowledgeEntries = await prisma.knowledgeEntry.findMany({
+    const rawEntries = await prisma.knowledgeEntry.findMany({
       where: { siteId: site.id },
       select: { title: true, content: true },
+      orderBy: { createdAt: "desc" },
       take: 20,
+    });
+
+    // Cap total injected knowledge to ~6000 chars to avoid token overflow
+    const KB_CHAR_BUDGET = 6000;
+    let usedChars = 0;
+    const knowledgeEntries = rawEntries.filter((e) => {
+      const entrySize = e.title.length + e.content.length + 10; // +10 for formatting
+      if (usedChars + entrySize > KB_CHAR_BUDGET) return false;
+      usedChars += entrySize;
+      return true;
     });
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -441,7 +452,7 @@ export async function POST(req: NextRequest) {
                   utmCampaign,
                 });
               } catch (err) {
-                console.error("Chat persist error:", err);
+                console.error("[chat] persist error for conversation", conversation?.id, err instanceof Error ? err.message : err);
               }
 
               const doneData = JSON.stringify({
@@ -509,7 +520,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Chat error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Error interno. Intentá de nuevo." },
       { status: 500 }
     );
   }

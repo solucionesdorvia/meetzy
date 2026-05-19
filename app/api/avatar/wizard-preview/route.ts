@@ -24,7 +24,7 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const dbUser = await getDbUser();
-    if (!dbUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!dbUser) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const { success } = await avatarPreviewIpRatelimit.limit(ip);
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid body", details: parsed.error.issues }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos.", details: parsed.error.issues }, { status: 400 });
     }
 
     const d = parsed.data;
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
     const { url, error } = await generateFluxAvatarImage(prompt, d.variation);
     if (!url) {
-      return NextResponse.json({ error: error ?? "Preview failed" }, { status: 500 });
+      return NextResponse.json({ error: error ?? "Error al generar la vista previa." }, { status: 500 });
     }
 
     return NextResponse.json({ previewUrl: url, prompt: prompt.slice(0, 400) });
