@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Sparkles, RefreshCw, Check, Upload, X, ChevronRight, ChevronLeft } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw, Check, Upload, X, ChevronRight, ChevronLeft, Zap } from "lucide-react";
 import { useProductToast } from "@/components/providers/product-toast";
 import { Button } from "@/components/ui/button";
 import type { CharacterSuggestion } from "@/app/api/avatar/suggest/route";
@@ -26,43 +26,53 @@ function SuggestionTile({
   s,
   selected,
   onClick,
+  index,
 }: {
   s: CharacterSuggestion;
   selected: boolean;
   onClick: () => void;
+  index: number;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border p-3 text-center transition-all duration-150 hover:scale-[1.03] active:scale-[0.97] ${
+      className={`group relative flex flex-col items-center gap-2.5 overflow-hidden rounded-[var(--radius-xl)] border p-4 text-center transition-all duration-200 ${
         selected
-          ? "border-[var(--accent)] bg-[var(--accent-subtle)] ring-1 ring-[var(--accent)]"
-          : "border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)]"
+          ? "border-[var(--accent)] ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--bg-surface)] shadow-[0_0_24px_rgba(99,102,241,0.35)]"
+          : "border-transparent hover:border-[var(--border-default)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:scale-[1.04] active:scale-[0.97]"
       }`}
+      style={{
+        background: `linear-gradient(145deg, ${s.gradientFrom}, ${s.gradientTo})`,
+        animation: `wiz-tile-in 0.35s cubic-bezier(0.34,1.56,0.64,1) ${index * 0.06}s both`,
+      }}
     >
       {selected && (
-        <span className="absolute right-2 top-2 flex size-4 items-center justify-center rounded-full bg-[var(--accent)]">
-          <Check className="size-2.5 text-white" />
+        <span
+          className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+          style={{ animation: "check-pop 0.2s cubic-bezier(0.34,1.56,0.64,1)" }}
+        >
+          <Check className="size-3 text-[var(--accent)]" strokeWidth={3} />
         </span>
       )}
+
+      {/* Glow overlay on hover */}
       <div
-        className="flex size-14 items-center justify-center rounded-xl text-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-        style={{
-          background: `linear-gradient(135deg, ${s.gradientFrom}, ${s.gradientTo})`,
-        }}
+        className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none"
+        style={{ background: `radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15), transparent 70%)` }}
+      />
+
+      <div
+        className="flex size-16 items-center justify-center rounded-2xl text-4xl shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_12px_rgba(0,0,0,0.25)] transition-transform duration-200 group-hover:scale-110"
+        style={{ background: "rgba(0,0,0,0.15)" }}
       >
         {s.emoji}
       </div>
       <div className="min-w-0 w-full">
-        <p
-          className={`truncate text-[11px] font-semibold leading-tight ${
-            selected ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
-          }`}
-        >
+        <p className="truncate text-[12px] font-bold leading-tight text-white drop-shadow-sm">
           {s.title}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[var(--text-tertiary)]">
+        <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-white/75">
           {s.description}
         </p>
       </div>
@@ -82,10 +92,10 @@ function ColorPicker({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5">
+    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2.5 transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]">
       <div
-        className="relative size-8 shrink-0 rounded-full border-2 border-[var(--border-default)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden"
-        style={{ background: value }}
+        className="relative size-9 shrink-0 rounded-full border-2 border-[var(--border-default)] shadow-[0_2px_10px_rgba(0,0,0,0.35)] overflow-hidden"
+        style={{ background: value, boxShadow: `0 0 0 3px ${value}30, 0 2px 10px rgba(0,0,0,0.35)` }}
       >
         <input
           type="color"
@@ -95,8 +105,8 @@ function ColorPicker({
         />
       </div>
       <div>
-        <p className="text-[11px] font-medium text-[var(--text-secondary)]">{label}</p>
-        <p className="font-mono text-[10px] text-[var(--text-tertiary)]">{value}</p>
+        <p className="text-[11px] font-semibold text-[var(--text-secondary)]">{label}</p>
+        <p className="font-mono text-[10px] text-[var(--text-tertiary)]">{value.toUpperCase()}</p>
       </div>
     </label>
   );
@@ -112,16 +122,50 @@ function StepDots({ step }: { step: 1 | 2 }) {
           key={n}
           className={`h-1.5 rounded-full transition-all duration-300 ${
             n === step
-              ? "w-6 bg-[var(--accent)]"
+              ? "w-8 bg-[var(--accent)] shadow-[0_0_8px_rgba(99,102,241,0.5)]"
               : n < step
-              ? "w-3 bg-[var(--accent)]/50"
-              : "w-3 bg-[var(--border-default)]"
+              ? "w-4 bg-[var(--accent)]/50"
+              : "w-4 bg-[var(--border-default)]"
           }`}
         />
       ))}
-      <span className="ml-1 text-[11px] text-[var(--text-tertiary)]">
+      <span className="ml-1 text-[11px] font-medium text-[var(--text-tertiary)]">
         {step === 1 ? "Elegí tu personaje" : "Personalizá y generá"}
       </span>
+    </div>
+  );
+}
+
+/* ── Generation counter banner ───────────────────────────────────── */
+
+function GenBanner({ genLeft }: { genLeft: number }) {
+  if (genLeft > 1) {
+    return (
+      <div className="mb-4 flex items-center gap-2 rounded-xl border border-[rgba(99,102,241,0.25)] bg-[rgba(99,102,241,0.06)] px-4 py-2.5">
+        <Zap className="size-3.5 text-[var(--accent)]" />
+        <p className="text-[11px] font-medium text-[var(--accent)]">
+          {genLeft} de 3 generaciones disponibles
+        </p>
+        <span className="ml-auto text-[10px] text-[var(--text-tertiary)]">Los previews no cuentan</span>
+      </div>
+    );
+  }
+  if (genLeft === 1) {
+    return (
+      <div className="mb-4 flex items-center gap-2 rounded-xl border border-[rgba(234,179,8,0.3)] bg-[rgba(234,179,8,0.06)] px-4 py-2.5">
+        <Zap className="size-3.5 text-yellow-500" />
+        <p className="text-[11px] font-medium text-yellow-500">
+          Última generación disponible — usala bien
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="mb-4 flex items-center gap-2 rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.06)] px-4 py-2.5">
+      <X className="size-3.5 text-[#f87171]" />
+      <p className="text-[11px] font-medium text-[#f87171]">
+        Sin generaciones disponibles para este agente
+      </p>
     </div>
   );
 }
@@ -304,12 +348,24 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
     <>
       <style>{`
         @keyframes wiz-tile-in {
-          from { opacity: 0; transform: translateY(10px) scale(0.95); }
+          from { opacity: 0; transform: translateY(14px) scale(0.88); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes wiz-step-in {
-          from { opacity: 0; transform: translateX(24px); }
+          from { opacity: 0; transform: translateX(28px); }
           to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes check-pop {
+          from { opacity: 0; transform: scale(0.4); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes avatar-appear {
+          from { opacity: 0; transform: scale(0.88); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes generating-pulse {
+          0%, 100% { opacity: 0.5; transform: scale(1); }
+          50%       { opacity: 1;   transform: scale(1.06); }
         }
       `}</style>
 
@@ -318,7 +374,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
 
         {/* ── STEP 1 ── */}
         {step === 1 && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_340px]" style={{ animation: "wiz-step-in 0.25s ease" }}>
+          <div className="grid gap-6 lg:grid-cols-[1fr_340px]" style={{ animation: "wiz-step-in 0.3s cubic-bezier(0.22,1,0.36,1)" }}>
 
             {/* Left: form + suggestions */}
             <div className="space-y-5">
@@ -373,18 +429,15 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   <h3 className="mb-4 font-syne text-[13px] font-bold text-[var(--text-primary)]">
                     Personajes sugeridos para tu negocio
                   </h3>
-                  <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-3">
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
                     {suggestions.map((s, i) => (
-                      <div
+                      <SuggestionTile
                         key={s.id}
-                        style={{ animation: `wiz-tile-in 0.3s ease ${i * 0.05}s both` }}
-                      >
-                        <SuggestionTile
-                          s={s}
-                          selected={selected?.id === s.id}
-                          onClick={() => setSelected(s)}
-                        />
-                      </div>
+                        s={s}
+                        selected={selected?.id === s.id}
+                        onClick={() => setSelected(s)}
+                        index={i}
+                      />
                     ))}
                   </div>
 
@@ -413,16 +466,16 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
               )}
             </div>
 
-            {/* Right: explainer */}
+            {/* Right: explainer + selected preview */}
             <div className="space-y-4">
               <div
-                className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-5"
+                className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] p-5"
                 style={{
                   background:
-                    "linear-gradient(160deg, rgba(99,102,241,0.06) 0%, var(--bg-elevated) 50%)",
+                    "linear-gradient(160deg, rgba(99,102,241,0.10) 0%, var(--bg-elevated) 60%)",
                 }}
               >
-                <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+                <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] shadow-[0_0_20px_rgba(99,102,241,0.2)]">
                   <Sparkles className="size-5 text-[var(--accent)]" />
                 </div>
                 <h3 className="font-syne text-[14px] font-bold text-[var(--text-primary)]">
@@ -444,8 +497,8 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-[var(--radius-md)] border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.06)] px-3 py-2">
-                  <p className="text-[11px] font-medium text-[var(--accent)]">
+                <div className="mt-4 rounded-[var(--radius-md)] border border-[rgba(99,102,241,0.25)] bg-[rgba(99,102,241,0.08)] px-3 py-2">
+                  <p className="text-[11px] font-semibold text-[var(--accent)]">
                     {genLeft} de 3 generaciones disponibles
                   </p>
                   <p className="text-[10px] text-[var(--text-tertiary)]">
@@ -457,14 +510,14 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
               {selected && (
                 <div
                   className="rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4"
-                  style={{ animation: "wiz-step-in 0.2s ease" }}
+                  style={{ animation: "wiz-step-in 0.25s cubic-bezier(0.22,1,0.36,1)" }}
                 >
                   <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
                     Seleccionado
                   </p>
                   <div className="flex items-center gap-3">
                     <div
-                      className="flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl"
+                      className="flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
                       style={{ background: `linear-gradient(135deg, ${selected.gradientFrom}, ${selected.gradientTo})` }}
                     >
                       {selected.emoji}
@@ -490,10 +543,13 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
 
         {/* ── STEP 2 ── */}
         {step === 2 && selected && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]" style={{ animation: "wiz-step-in 0.25s ease" }}>
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]" style={{ animation: "wiz-step-in 0.3s cubic-bezier(0.22,1,0.36,1)" }}>
 
             {/* Left: customization */}
             <div className="space-y-4">
+
+              {/* Gen counter banner */}
+              <GenBanner genLeft={genLeft} />
 
               {/* Back + selected character header */}
               <div className="flex items-center gap-3">
@@ -508,7 +564,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                 <div className="h-px flex-1 bg-[var(--border-subtle)]" />
                 <div className="flex items-center gap-2">
                   <div
-                    className="flex size-7 items-center justify-center rounded-lg text-base"
+                    className="flex size-7 items-center justify-center rounded-lg text-base shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
                     style={{ background: `linear-gradient(135deg, ${selected.gradientFrom}, ${selected.gradientTo})` }}
                   >
                     {selected.emoji}
@@ -523,7 +579,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   Identidad de marca
                 </h3>
 
-                <div className="flex flex-wrap gap-6">
+                <div className="flex flex-wrap gap-3">
                   <ColorPicker label="Color principal" value={brandColor} onChange={setBrandColor} />
                   <ColorPicker label="Color secundario" value={brandColor2} onChange={setBrandColor2} />
                 </div>
@@ -550,14 +606,21 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                     Logo de la marca{" "}
                     <span className="opacity-60">(opcional — se superpone en el avatar)</span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    {logoUrl && (
+                  <div
+                    className="flex items-center gap-3 rounded-xl border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-surface)] p-3 transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)] cursor-pointer"
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    {logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={logoUrl}
                         alt="Logo"
-                        className="size-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] object-contain p-0.5"
+                        className="size-10 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] object-contain p-0.5"
                       />
+                    ) : (
+                      <div className="flex size-10 items-center justify-center rounded-lg border border-dashed border-[var(--border-default)] bg-[var(--bg-elevated)]">
+                        <Upload className="size-4 text-[var(--text-tertiary)]" />
+                      </div>
                     )}
                     <input
                       ref={logoInputRef}
@@ -569,24 +632,18 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                         if (f) void handleLogoUpload(f);
                       }}
                     />
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={logoUploading}
-                      className="flex items-center gap-1.5 rounded-[var(--radius-md)] border border-dashed border-[var(--border-default)] bg-[var(--bg-overlay)] px-3 py-2 text-[11px] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-border)] hover:text-[var(--accent)]"
-                    >
-                      {logoUploading ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <Upload className="size-3.5" />
-                      )}
-                      {logoUrl ? "Cambiar logo" : "Subir logo"}
-                    </button>
-                    {logoUrl && (
+                    <div className="flex-1">
+                      <p className="text-[12px] font-medium text-[var(--text-secondary)]">
+                        {logoUploading ? "Subiendo…" : logoUrl ? "Cambiar logo" : "Subir logo"}
+                      </p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">PNG o SVG · fondo transparente</p>
+                    </div>
+                    {logoUploading && <Loader2 className="size-4 animate-spin text-[var(--accent)]" />}
+                    {logoUrl && !logoUploading && (
                       <button
                         type="button"
-                        onClick={() => setLogoUrl("")}
-                        className="flex size-7 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--text-tertiary)] transition-colors hover:border-[rgba(248,113,113,0.5)] hover:text-[#f87171]"
+                        onClick={(e) => { e.stopPropagation(); setLogoUrl(""); }}
+                        className="flex size-6 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--text-tertiary)] transition-colors hover:border-[rgba(248,113,113,0.5)] hover:text-[#f87171]"
                       >
                         <X className="size-3" />
                       </button>
@@ -597,23 +654,30 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
 
               {/* Actions */}
               <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-5 space-y-3">
-                <h3 className="font-syne text-[13px] font-bold text-[var(--text-primary)]">
-                  Generá tu avatar
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-syne text-[13px] font-bold text-[var(--text-primary)]">
+                    Generá tu avatar
+                  </h3>
+                  {genLeft > 0 && (
+                    <span className="rounded-full border border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.08)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]">
+                      {genLeft}/3 generaciones
+                    </span>
+                  )}
+                </div>
                 <p className="text-[12px] text-[var(--text-tertiary)] leading-relaxed">
-                  Primero generá un preview rápido (gratis, no se guarda). Cuando te guste el resultado, guardalo como avatar definitivo.
+                  Primero generá un <strong className="text-[var(--text-secondary)]">preview rápido</strong> (gratis, no se guarda). Cuando te guste el resultado, guardalo como avatar definitivo.
                 </p>
 
                 <button
                   type="button"
                   onClick={() => void handlePreview()}
                   disabled={previewing || saving}
-                  className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-overlay)] py-2.5 text-[12px] font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] disabled:opacity-50"
+                  className="group flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-overlay)] py-3 text-[12px] font-medium text-[var(--text-secondary)] transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] disabled:opacity-50"
                 >
                   {previewing ? (
                     <><Loader2 className="size-3.5 animate-spin" />Generando preview… 5–15s</>
                   ) : (
-                    <><RefreshCw className="size-3.5" />{previewUrl ? "Regenerar preview" : "Preview rápido (gratis)"}</>
+                    <><RefreshCw className="size-3.5 transition-transform duration-300 group-hover:rotate-180" />{previewUrl ? "Regenerar preview (gratis)" : "Preview rápido (gratis)"}</>
                   )}
                 </button>
 
@@ -621,7 +685,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={saving || previewing || genLeft <= 0}
-                  className="w-full gap-2"
+                  className="w-full gap-2 py-3 text-[13px] font-semibold shadow-[0_0_24px_rgba(99,102,241,0.3)] transition-all duration-150 hover:shadow-[0_0_32px_rgba(99,102,241,0.45)] disabled:shadow-none"
                   style={{ background: genLeft > 0 ? "linear-gradient(135deg, #7c3aed, #6366f1)" : undefined }}
                 >
                   {saving ? (
@@ -633,25 +697,31 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
 
                 {genLeft === 0 && (
                   <p className="text-center text-[11px] text-[#f87171]">
-                    Ya usaste las 3 generaciones de este agente.
+                    Ya usaste las 3 generaciones de este agente. El preview sigue disponible.
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Right: preview */}
+            {/* Right: preview panel */}
             <div className="lg:sticky lg:top-24 lg:self-start">
-              <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+              <div
+                className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)]"
+                style={{
+                  background: "linear-gradient(160deg, rgba(99,102,241,0.05) 0%, var(--bg-elevated) 60%)",
+                  boxShadow: `0 0 0 1px rgba(99,102,241,0.1), 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)`,
+                }}
+              >
                 {/* Header */}
                 <div
                   className="px-4 py-3 border-b border-[var(--border-subtle)]"
                   style={{
-                    background: `linear-gradient(135deg, color-mix(in srgb, ${brandColor} 8%, transparent), transparent)`,
+                    background: `linear-gradient(135deg, color-mix(in srgb, ${brandColor} 12%, transparent), transparent)`,
                   }}
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="flex size-6 items-center justify-center rounded-lg text-sm"
+                      className="flex size-6 items-center justify-center rounded-lg text-sm shadow-[0_2px_6px_rgba(0,0,0,0.2)]"
                       style={{ background: `linear-gradient(135deg, ${selected.gradientFrom}, ${selected.gradientTo})` }}
                     >
                       {selected.emoji}
@@ -663,7 +733,12 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                 </div>
 
                 {/* Preview image area */}
-                <div className="flex aspect-square items-center justify-center bg-[var(--bg-surface)] relative">
+                <div
+                  className="flex aspect-square items-center justify-center relative overflow-hidden"
+                  style={{
+                    background: `radial-gradient(ellipse at 50% 30%, color-mix(in srgb, ${brandColor} 8%, var(--bg-surface)), var(--bg-surface))`,
+                  }}
+                >
                   {previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -671,7 +746,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                       alt="Avatar preview"
                       className="size-full object-contain"
                       key={previewUrl}
-                      style={{ animation: "wiz-step-in 0.3s ease" }}
+                      style={{ animation: "avatar-appear 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}
                     />
                   ) : (
                     <div className="flex flex-col items-center gap-3 p-6 text-center">
@@ -679,6 +754,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                         className="flex size-20 items-center justify-center rounded-2xl text-4xl shadow-[0_0_40px_rgba(0,0,0,0.3)]"
                         style={{
                           background: `linear-gradient(135deg, ${selected.gradientFrom}, ${selected.gradientTo})`,
+                          animation: "generating-pulse 2.5s ease-in-out infinite",
                         }}
                       >
                         {selected.emoji}
@@ -691,10 +767,35 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   )}
 
                   {(previewing || saving) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--bg-surface)]/80 backdrop-blur-sm">
-                      <Loader2 className="size-8 animate-spin text-[var(--accent)]" />
-                      <p className="text-[12px] font-medium text-[var(--text-secondary)]">
-                        {saving ? "Procesando y guardando…" : "Generando tu avatar…"}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 backdrop-blur-md"
+                      style={{ background: "rgba(6,6,8,0.75)" }}
+                    >
+                      {/* Animated glow rings */}
+                      <div className="relative flex items-center justify-center">
+                        <div
+                          className="absolute size-20 rounded-full opacity-20"
+                          style={{
+                            background: brandColor,
+                            animation: "generating-pulse 1.5s ease-in-out infinite",
+                          }}
+                        />
+                        <div
+                          className="absolute size-14 rounded-full opacity-30"
+                          style={{
+                            background: brandColor,
+                            animation: "generating-pulse 1.5s ease-in-out 0.3s infinite",
+                          }}
+                        />
+                        <Loader2
+                          className="size-8 animate-spin"
+                          style={{ color: brandColor }}
+                        />
+                      </div>
+                      <p className="text-[12px] font-semibold text-white">
+                        {saving ? "Procesando en HD…" : "Generando preview…"}
+                      </p>
+                      <p className="text-[10px] text-white/50">
+                        {saving ? "15–30 segundos" : "5–15 segundos"}
                       </p>
                     </div>
                   )}
@@ -702,8 +803,8 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
 
                 {/* Color preview strip */}
                 <div className="flex h-1.5">
-                  <div className="flex-1" style={{ background: brandColor }} />
-                  <div className="flex-1" style={{ background: brandColor2 }} />
+                  <div className="flex-1 transition-all duration-300" style={{ background: brandColor }} />
+                  <div className="flex-1 transition-all duration-300" style={{ background: brandColor2 }} />
                 </div>
 
                 {/* Info footer */}
@@ -716,12 +817,12 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                     </div>
                   )}
                   <p className="text-[10px] leading-snug text-[var(--text-tertiary)]">
-                    El preview es schnell (rápido y gratis). "Guardar" genera la versión final HD y la guarda en tu perfil.
+                    El preview es rápido y gratis. "Guardar" genera la versión final HD y la guarda en tu perfil.
                   </p>
                 </div>
               </div>
 
-              {/* Widget launcher preview — the actual bottom-right bubble */}
+              {/* Widget launcher preview */}
               <div className="mt-4 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
                 <div className="border-b border-[var(--border-subtle)] px-3 py-1.5">
                   <p className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
@@ -729,9 +830,9 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   </p>
                 </div>
                 {/* Simulated webpage with launcher bubble */}
-                <div className="relative h-28 bg-[var(--bg-surface)]">
-                  {/* Fake page content */}
-                  <div className="absolute inset-x-4 top-3 space-y-1.5 opacity-20">
+                <div className="relative h-28 overflow-hidden" style={{ background: "var(--bg-surface)" }}>
+                  {/* Fake page content lines */}
+                  <div className="absolute inset-x-4 top-3 space-y-1.5 opacity-15">
                     <div className="h-2 w-3/4 rounded-full bg-[var(--text-tertiary)]" />
                     <div className="h-2 w-1/2 rounded-full bg-[var(--text-tertiary)]" />
                     <div className="h-2 w-2/3 rounded-full bg-[var(--text-tertiary)]" />
@@ -740,7 +841,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                   <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1.5">
                     {/* "En vivo" badge */}
                     <div
-                      className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold text-white"
+                      className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold text-white shadow-md"
                       style={{ background: brandColor }}
                     >
                       <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -748,10 +849,10 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                     </div>
                     {/* Circular bubble with avatar */}
                     <div
-                      className="flex size-[52px] items-center justify-center rounded-full overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                      className="flex size-[52px] items-center justify-center rounded-full overflow-hidden transition-all duration-300"
                       style={{
                         background: previewUrl ? "transparent" : `linear-gradient(135deg, ${selected.gradientFrom}, ${selected.gradientTo})`,
-                        boxShadow: `0 0 0 3px ${brandColor}40, 0 4px 20px rgba(0,0,0,0.4)`,
+                        boxShadow: `0 0 0 3px ${brandColor}50, 0 6px 24px rgba(0,0,0,0.4)`,
                       }}
                     >
                       {previewUrl ? (
@@ -761,10 +862,10 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                           alt=""
                           className="size-full object-cover"
                           key={previewUrl}
-                          style={{ animation: "wiz-step-in 0.3s ease" }}
+                          style={{ animation: "avatar-appear 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}
                         />
                       ) : (
-                        <span className="text-2xl">{selected.emoji}</span>
+                        <span className="text-2xl" style={{ animation: "generating-pulse 2.5s ease-in-out infinite" }}>{selected.emoji}</span>
                       )}
                     </div>
                   </div>
@@ -773,8 +874,8 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                 {/* Chat window preview below */}
                 <div className="border-t border-[var(--border-subtle)]">
                   <div
-                    className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2"
-                    style={{ background: `color-mix(in srgb, ${brandColor} 6%, transparent)` }}
+                    className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-3 py-2 transition-all duration-300"
+                    style={{ background: `color-mix(in srgb, ${brandColor} 8%, transparent)` }}
                   >
                     <div
                       className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs"
@@ -800,7 +901,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                       <p className="text-[9px] text-[var(--text-primary)]">¡Hola! ¿En qué te puedo ayudar?</p>
                     </div>
                     <div
-                      className="ml-auto max-w-[70%] rounded-2xl rounded-tr-sm px-2 py-1"
+                      className="ml-auto max-w-[70%] rounded-2xl rounded-tr-sm px-2 py-1 transition-all duration-300"
                       style={{ background: brandColor }}
                     >
                       <p className="text-[9px] text-white">¿Cuáles son sus servicios?</p>

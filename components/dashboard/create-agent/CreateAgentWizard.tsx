@@ -1326,9 +1326,18 @@ function StepAgent({
 }
 
 const STARTER_CHARS = [
-  { primary: "human" as PrimaryChar, subtype: "male", emoji: "👤", label: "Hombre" },
-  { primary: "human" as PrimaryChar, subtype: "female", emoji: "👩", label: "Mujer" },
+  { primary: "human" as PrimaryChar, subtype: "male", emoji: "🧑", label: "Hombre", desc: "Personaje masculino base" },
+  { primary: "human" as PrimaryChar, subtype: "female", emoji: "👩", label: "Mujer", desc: "Personaje femenino base" },
 ] as const;
+
+const STYLE_MODIFIER_ICONS: Record<string, string> = {
+  profesional: "💼",
+  amigable: "😊",
+  juvenil: "⚡",
+  divertido: "🎉",
+  elegante: "✨",
+  tecnico: "🔧",
+};
 
 function StyleChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -1340,12 +1349,13 @@ function StyleChips({ value, onChange }: { value: string; onChange: (v: string) 
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-all duration-150 dash-focus-ring ${
+            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all duration-150 dash-focus-ring ${
               value === key
-                ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_0_12px_var(--accent-glow)]"
-                : "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:border-[var(--accent-border)] hover:text-[var(--text-primary)]"
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_0_14px_var(--accent-glow)] scale-105"
+                : "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text-primary)] hover:scale-[1.03]"
             }`}
           >
+            <span className="text-[13px] leading-none">{STYLE_MODIFIER_ICONS[key] ?? "●"}</span>
             {label}
           </button>
         ))}
@@ -1430,14 +1440,23 @@ function StepAvatarPick({
                   key={c.subtype}
                   type="button"
                   onClick={() => { setPrimary(c.primary); setSubtype(c.subtype); }}
-                  className={`flex flex-col items-center gap-2 rounded-xl border py-4 text-center transition-all duration-150 dash-focus-ring ${
+                  className={`relative flex flex-col items-center gap-2.5 rounded-[var(--radius-xl)] border py-5 text-center transition-all duration-150 dash-focus-ring ${
                     sel
-                      ? "border-[var(--accent)] bg-[var(--accent-subtle)] shadow-[0_0_0_1px_var(--accent)]"
-                      : "border-[var(--border-default)] bg-[var(--bg-elevated)] hover:border-[var(--border-strong)]"
+                      ? "border-[var(--accent)] bg-[var(--accent-subtle)] shadow-[0_0_0_2px_var(--accent),0_0_20px_rgba(99,102,241,0.2)]"
+                      : "border-[var(--border-default)] bg-[var(--bg-elevated)] hover:border-[var(--border-strong)] hover:scale-[1.02]"
                   }`}
+                  style={{ background: sel ? undefined : `linear-gradient(160deg, var(--bg-elevated), var(--bg-surface))` }}
                 >
-                  <span className="text-3xl leading-none">{c.emoji}</span>
-                  <span className={`text-[12px] font-semibold ${sel ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}>{c.label}</span>
+                  {sel && (
+                    <span className="absolute right-2.5 top-2.5 flex size-4.5 items-center justify-center rounded-full bg-[var(--accent)] text-white">
+                      <Check className="size-2.5" strokeWidth={3} />
+                    </span>
+                  )}
+                  <span className="text-4xl leading-none">{c.emoji}</span>
+                  <div>
+                    <span className={`block text-[13px] font-bold ${sel ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}>{c.label}</span>
+                    <span className="block text-[10px] text-[var(--text-tertiary)]">{c.desc}</span>
+                  </div>
                 </button>
               );
             })}
@@ -1518,11 +1537,11 @@ function StepAvatarPick({
           </div>
 
           {suggestBusy ? (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex min-h-[110px] animate-pulse flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3"
+                  className="flex min-h-[120px] animate-pulse flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3"
                 />
               ))}
             </div>
@@ -1538,21 +1557,56 @@ function StepAvatarPick({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-              {aiSuggestions.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSelectedSuggestion(s)}
-                  className="group flex min-h-[110px] flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-transparent p-3 text-center transition-all duration-150 hover:scale-[1.02] hover:shadow-lg dash-focus-ring"
-                  style={{ background: `linear-gradient(135deg, ${s.gradientFrom}, ${s.gradientTo})` }}
-                >
-                  <span className="text-3xl leading-none drop-shadow">{s.emoji}</span>
-                  <span className="font-syne text-[12px] font-bold text-white drop-shadow-sm">{s.title}</span>
-                  <span className="line-clamp-2 text-[10px] leading-tight text-white/80">{s.description}</span>
-                </button>
-              ))}
-            </div>
+            <>
+              <style>{`
+                @keyframes wiz-tile-in {
+                  from { opacity: 0; transform: translateY(14px) scale(0.88); }
+                  to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes check-pop {
+                  from { opacity: 0; transform: scale(0.4); }
+                  to   { opacity: 1; transform: scale(1); }
+                }
+              `}</style>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {aiSuggestions.map((s, i) => {
+                  // selectedSuggestion is null in this block (Phase 1), so sel is always false
+                  const sel = false;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSelectedSuggestion(s)}
+                      className={`group relative flex min-h-[120px] flex-col items-center justify-center gap-2.5 overflow-hidden rounded-[var(--radius-xl)] border p-4 text-center transition-all duration-200 dash-focus-ring ${
+                        sel
+                          ? "border-[var(--accent)] ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--bg-surface)] shadow-[0_0_24px_rgba(99,102,241,0.3)]"
+                          : "border-transparent hover:border-[var(--border-default)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.3)] hover:scale-[1.04] active:scale-[0.97]"
+                      }`}
+                      style={{
+                        background: `linear-gradient(145deg, ${s.gradientFrom}, ${s.gradientTo})`,
+                        animation: `wiz-tile-in 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.06}s both`,
+                      }}
+                    >
+                      {sel && (
+                        <span
+                          className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
+                          style={{ animation: "check-pop 0.2s cubic-bezier(0.34,1.56,0.64,1)" }}
+                        >
+                          <Check className="size-3 text-[var(--accent)]" strokeWidth={3} />
+                        </span>
+                      )}
+                      {/* Hover shimmer */}
+                      <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none"
+                        style={{ background: "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15), transparent 70%)" }}
+                      />
+                      <span className="text-4xl leading-none drop-shadow transition-transform duration-200 group-hover:scale-110">{s.emoji}</span>
+                      <span className="font-syne text-[12px] font-bold text-white drop-shadow-sm">{s.title}</span>
+                      <span className="line-clamp-2 text-[10px] leading-tight text-white/75">{s.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       ) : null}
