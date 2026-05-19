@@ -31,10 +31,12 @@ export const STYLE_MODIFIER_LABELS: Record<string, string> = {
 };
 
 export const AVATAR_STYLE_BASE = `professional 3D cartoon mascot character, Duolingo-style expressive character design,
-vibrant smooth 3D render, soft studio lighting, character centered in frame,
-completely transparent background, PNG with alpha channel, no background elements,
+vibrant smooth 3D render, soft diffused lighting with no hard shadows,
+completely isolated character on pure transparent background, no floor, no shadow, no ground, no reflection,
+PNG with alpha channel, character floating centered in frame, no background elements whatsoever,
 big expressive eyes, smooth glossy skin texture, friendly approachable expression,
-full character visible from head to waist, high quality 3D illustration`.replace(/\n/g, " ");
+full character visible from head to waist, high quality 3D illustration,
+clean edges, no artifacts, no cut-off limbs, fully intact character`.replace(/\n/g, " ");
 
 /**
  * Agent-type visual modifiers applied to human archetypes.
@@ -86,20 +88,20 @@ export interface AvatarPromptConfig {
 }
 
 const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
-  human_male: `young friendly male mascot character, wearing a modern hoodie or shirt in the brand colors, neat hair, genuine warm smile`,
-  human_female: `young friendly female mascot character, wearing a modern top or hoodie in the brand colors, neat styled hair, warm approachable smile`,
-  dog: `cute anthropomorphic friendly dog mascot, expressive face, wearing a small bandana in brand colors`,
-  cat: `cute anthropomorphic friendly cat mascot, big eyes, wearing a collar with brand colored accent`,
-  rabbit: `cute anthropomorphic bunny mascot, soft ears, playful pose, brand colored vest`,
-  fox: `cute anthropomorphic fox mascot, fluffy tail, clever smile, scarf in brand colors`,
-  panda: `cute anthropomorphic panda mascot, round friendly face,bamboo optional, brand colored tee`,
-  bear: `cute teddy-bear style mascot, warm smile, brand colored shirt`,
-  orange: `cute orange fruit mascot with expressive cartoon face and tiny arms and legs`,
-  apple: `cute apple fruit mascot with big eyes and smile, cartoon limbs`,
-  cup: `cute coffee cup mascot character with face, small steam curl, glossy ceramic`,
-  star: `cute golden star mascot with face and arms, sparkly expressive`,
-  rocket: `cute rocket ship mascot with face on the window, friendly cartoon`,
-  diamond: `cute faceted gem mascot with cartoon eyes and smile`,
+  human_male: `young friendly male mascot character, wearing a modern hoodie or shirt in the brand colors, neat hair, genuine warm smile, floating in air no floor`,
+  human_female: `young friendly female mascot character, wearing a modern top or hoodie in the brand colors, neat styled hair, warm approachable smile, floating in air no floor`,
+  dog: `cute anthropomorphic friendly dog mascot, expressive face, wearing a small bandana in brand colors, floating pose no floor no shadow`,
+  cat: `cute anthropomorphic friendly cat mascot, big eyes, wearing a collar with brand colored accent, floating no floor`,
+  rabbit: `cute anthropomorphic bunny mascot, soft ears, playful floating pose, brand colored vest, no floor no shadow`,
+  fox: `cute anthropomorphic fox mascot, fluffy tail, clever smile, scarf in brand colors, floating no ground`,
+  panda: `cute anthropomorphic panda mascot, round friendly face, brand colored tee, floating no floor`,
+  bear: `cute teddy-bear style mascot, warm smile, brand colored shirt, floating no floor no shadow`,
+  orange: `cute orange fruit mascot with expressive cartoon face and tiny arms and legs, floating no floor`,
+  apple: `cute apple fruit mascot with big eyes and smile, cartoon limbs, floating no floor`,
+  cup: `cute coffee cup mascot character with face, small steam curl, glossy ceramic, floating no floor no shadow`,
+  star: `cute golden star mascot with face and arms, sparkly expressive, floating in space no floor no ground`,
+  rocket: `cute rocket ship mascot with friendly face on the window, 3D cartoon style, floating in air no floor no ground no shadow`,
+  diamond: `cute faceted gem mascot with cartoon eyes and smile, floating no floor no shadow`,
 };
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
