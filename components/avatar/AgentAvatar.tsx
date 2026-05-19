@@ -31,13 +31,8 @@ function adjust(hex: string, amt: number): string {
     .join("")}`;
 }
 
-// ── Placeholders DiceBear (reemplazar con imágenes finales) ──────────────────
-// Cambiar estas URLs por rutas a /public/avatars/male.png y female.png
-// cuando estén las imágenes generadas con IA.
-const MALE_FACE_URL =
-  "https://api.dicebear.com/9.x/micah/svg?seed=milo-pro&baseColor=f5c49a,fddcb5&facialHairProbability=0&mouth=laughing&eyeShadow=variant02&hair=dannyPhantom,full,pixie,shortCurly&hairColor=2c1b0e,362312";
-const FEMALE_FACE_URL =
-  "https://api.dicebear.com/9.x/micah/svg?seed=mila-pro&baseColor=f5c49a,fddcb5&facialHairProbability=0&mouth=laughing&eyeShadow=variant02&hair=bob,curly,long,pigtails&hairColor=2c1b0e,6b3a2a";
+const MALE_FACE_URL   = "/avatars/male.png";
+const FEMALE_FACE_URL = "/avatars/female.png";
 
 export default function AgentAvatar({
   size       = 56,
