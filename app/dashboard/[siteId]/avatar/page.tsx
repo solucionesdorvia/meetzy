@@ -25,15 +25,15 @@ export default async function AvatarPage({ params }: { params: Promise<{ siteId:
 
       {!isPro ? (
         <div className="flex min-h-[calc(100vh-260px)] flex-col items-center justify-center py-6">
-          {/* Avatar previews */}
+          {/* Persona previews */}
           <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-            Estilos disponibles en Pro
+            Personajes disponibles en Pro
           </p>
-          <div className="mb-8 flex items-end gap-4">
+          <div className="mb-8 flex items-end gap-3">
             {[
-              { emoji: "🍊", label: "Naranja", color: "#f97316" },
-              { emoji: "🐶", label: "Perro", color: "#6366f1" },
-              { emoji: "👤", label: "Humano", color: "#0ea5e9" },
+              { emoji: "🧑‍💼", label: "Profesional", color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
+              { emoji: "🐶", label: "Amigable", color: "#f97316", bg: "rgba(249,115,22,0.12)" },
+              { emoji: "🚀", label: "Divertido", color: "#0ea5e9", bg: "rgba(14,165,233,0.12)" },
             ].map((a) => (
               <div
                 key={a.label}
@@ -41,7 +41,7 @@ export default async function AvatarPage({ params }: { params: Promise<{ siteId:
               >
                 <div
                   className="flex size-16 items-center justify-center rounded-xl text-3xl"
-                  style={{ background: `color-mix(in srgb, ${a.color} 15%, transparent)` }}
+                  style={{ background: a.bg }}
                 >
                   {a.emoji}
                 </div>
@@ -55,12 +55,12 @@ export default async function AvatarPage({ params }: { params: Promise<{ siteId:
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-[var(--accent)] shadow-[0_0_24px_rgba(99,102,241,0.35)]">
               <Lock className="size-5 text-white" aria-hidden />
             </div>
-            <h3 className="font-syne text-xl font-bold tracking-tight text-[var(--text-primary)]">Avatar de marca en Plan Pro</h3>
+            <h3 className="font-syne text-xl font-bold tracking-tight text-[var(--text-primary)]">Avatar con IA en Plan Pro</h3>
             <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-              Personajes 2D animados con tus colores y logo. El widget en Starter sigue funcionando con burbuja y texto.
+              Generá un personaje único con inteligencia artificial — tu estilo, tu color y tu logo. El plan Starter sigue funcionando con hombre o mujer base.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {["Personajes únicos", "Tu color de marca", "Logo incluido"].map((f) => (
+              {["Personaje único con IA", "Tu color de marca", "Logo incluido", "6 estilos de tono"].map((f) => (
                 <span key={f} className="rounded-full border border-[var(--accent-border)] bg-[var(--bg-surface)] px-3 py-1 text-[11px] font-medium text-[var(--accent)]">
                   ✓ {f}
                 </span>
