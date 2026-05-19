@@ -90,7 +90,26 @@ Sugerí 6 personajes únicos e ideales para el avatar de IA de este negocio.`,
 
     const text = res.choices[0]?.message?.content ?? "{}";
     const parsed2 = JSON.parse(text) as { suggestions?: CharacterSuggestion[] };
-    const suggestions = parsed2.suggestions ?? FALLBACK_SUGGESTIONS;
+    const raw = parsed2.suggestions ?? FALLBACK_SUGGESTIONS;
+
+    // Sanitize: map any invalid archetype to the closest valid one
+    const VALID_ARCHETYPES = new Set([
+      "human_male", "human_female", "dog", "cat", "rabbit", "fox",
+      "panda", "bear", "orange", "apple", "cup", "star", "rocket", "diamond",
+    ]);
+    const ARCHETYPE_MAP: Record<string, string> = {
+      robot: "rocket", human: "human_male", woman: "human_female",
+      man: "human_male", girl: "human_female", boy: "human_male",
+      wolf: "fox", lion: "bear", tiger: "cat", bird: "star",
+      fish: "dog", owl: "cat", penguin: "panda", koala: "panda",
+      fox_animal: "fox", bunny: "rabbit",
+    };
+    const suggestions = raw.map((s) => ({
+      ...s,
+      archetype: VALID_ARCHETYPES.has(s.archetype)
+        ? s.archetype
+        : (ARCHETYPE_MAP[s.archetype] ?? "rocket"),
+    }));
 
     return NextResponse.json({ suggestions: suggestions.slice(0, 6) });
   } catch (e) {
