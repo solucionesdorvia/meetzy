@@ -120,61 +120,61 @@ export default function AgentAvatar({
           preserveAspectRatio="xMidYMid meet"
         />
 
-        {/* ── Headset — símbolo de agente de soporte ───────────────────── */}
+        {/* ── Headset — fino, proporcional, headset de oficina ────────── */}
 
-        {/* Banda sobre la cabeza */}
+        {/* Banda sobre la cabeza — trazo fino */}
         <path
-          d="M17 57 C14 36, 27 11, 50 9 C73 11, 86 36, 83 57"
+          d="M22 55 C20 38, 30 14, 50 11 C70 14, 80 38, 78 55"
           fill="none"
-          stroke={shirtDark}
-          strokeWidth="5.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M17 57 C14 36, 27 11, 50 9 C73 11, 86 36, 83 57"
-          fill="none"
-          stroke={brandColor}
+          stroke={adjust(brandColor, -30)}
           strokeWidth="3.5"
           strokeLinecap="round"
         />
-
-        {/* Auricular izquierdo */}
-        <ellipse cx="15" cy="59" rx="9.5" ry="11.5" fill={shirtDark} />
-        <ellipse cx="15" cy="59" rx="7"   ry="9"    fill={brandColor} />
-        <ellipse cx="15" cy="59" rx="4"   ry="5.5"  fill={adjust(brandColor, -55)} />
-
-        {/* Auricular derecho */}
-        <ellipse cx="85" cy="59" rx="9.5" ry="11.5" fill={shirtDark} />
-        <ellipse cx="85" cy="59" rx="7"   ry="9"    fill={brandColor} />
-        <ellipse cx="85" cy="59" rx="4"   ry="5.5"  fill={adjust(brandColor, -55)} />
-
-        {/* Brazo del micrófono */}
         <path
-          d="M9 65 Q4 76 20 78"
-          fill="none"
-          stroke={shirtDark}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M9 65 Q4 76 20 78"
+          d="M22 55 C20 38, 30 14, 50 11 C70 14, 80 38, 78 55"
           fill="none"
           stroke={brandColor}
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
         />
 
-        {/* Cápsula del micrófono */}
-        <rect x="17" y="75" width="9" height="6" rx="3" fill={shirtDark} />
-        <rect x="18" y="75.8" width="7" height="4.4" rx="2.2" fill={brandColor} />
+        {/* Auricular izquierdo — pequeño y proporcional */}
+        <ellipse cx="20" cy="57" rx="6.5" ry="7.5" fill={adjust(brandColor, -30)} />
+        <ellipse cx="20" cy="57" rx="5"   ry="6"   fill={brandColor} />
+        <ellipse cx="20" cy="57" rx="2.5" ry="3"   fill={adjust(brandColor, -50)} />
 
-        {/* Punto activo del mic (pulsa cuando habla) */}
+        {/* Auricular derecho */}
+        <ellipse cx="80" cy="57" rx="6.5" ry="7.5" fill={adjust(brandColor, -30)} />
+        <ellipse cx="80" cy="57" rx="5"   ry="6"   fill={brandColor} />
+        <ellipse cx="80" cy="57" rx="2.5" ry="3"   fill={adjust(brandColor, -50)} />
+
+        {/* Brazo del micrófono — fino */}
+        <path
+          d="M15 62 Q11 72 24 74"
+          fill="none"
+          stroke={adjust(brandColor, -30)}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M15 62 Q11 72 24 74"
+          fill="none"
+          stroke={brandColor}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+        />
+
+        {/* Cápsula del micrófono — pequeña */}
+        <rect x="21" y="71.5" width="7" height="4.5" rx="2.2" fill={adjust(brandColor, -30)} />
+        <rect x="22" y="72.2" width="5" height="3"   rx="1.5" fill={brandColor} />
+
+        {/* LED activo del mic cuando habla */}
         {isSpeaking && (
           <circle
-            cx="21.5" cy="78"
-            r="2"
+            cx="24.5" cy="73.7"
+            r="1.4"
             fill="white"
-            opacity="0.9"
+            opacity="0.95"
             style={{ animation: "aa-mic 0.8s ease-in-out infinite alternate" }}
           />
         )}
