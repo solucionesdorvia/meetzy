@@ -120,6 +120,65 @@ export default function AgentAvatar({
           preserveAspectRatio="xMidYMid meet"
         />
 
+        {/* ── Headset — símbolo de agente de soporte ───────────────────── */}
+
+        {/* Banda sobre la cabeza */}
+        <path
+          d="M17 57 C14 36, 27 11, 50 9 C73 11, 86 36, 83 57"
+          fill="none"
+          stroke={shirtDark}
+          strokeWidth="5.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M17 57 C14 36, 27 11, 50 9 C73 11, 86 36, 83 57"
+          fill="none"
+          stroke={brandColor}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+        />
+
+        {/* Auricular izquierdo */}
+        <ellipse cx="15" cy="59" rx="9.5" ry="11.5" fill={shirtDark} />
+        <ellipse cx="15" cy="59" rx="7"   ry="9"    fill={brandColor} />
+        <ellipse cx="15" cy="59" rx="4"   ry="5.5"  fill={adjust(brandColor, -55)} />
+
+        {/* Auricular derecho */}
+        <ellipse cx="85" cy="59" rx="9.5" ry="11.5" fill={shirtDark} />
+        <ellipse cx="85" cy="59" rx="7"   ry="9"    fill={brandColor} />
+        <ellipse cx="85" cy="59" rx="4"   ry="5.5"  fill={adjust(brandColor, -55)} />
+
+        {/* Brazo del micrófono */}
+        <path
+          d="M9 65 Q4 76 20 78"
+          fill="none"
+          stroke={shirtDark}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9 65 Q4 76 20 78"
+          fill="none"
+          stroke={brandColor}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+
+        {/* Cápsula del micrófono */}
+        <rect x="17" y="75" width="9" height="6" rx="3" fill={shirtDark} />
+        <rect x="18" y="75.8" width="7" height="4.4" rx="2.2" fill={brandColor} />
+
+        {/* Punto activo del mic (pulsa cuando habla) */}
+        {isSpeaking && (
+          <circle
+            cx="21.5" cy="78"
+            r="2"
+            fill="white"
+            opacity="0.9"
+            style={{ animation: "aa-mic 0.8s ease-in-out infinite alternate" }}
+          />
+        )}
+
         {/* ── Ropa: cubre la zona inferior de la imagen ────────────────── */}
 
         {/* Cuerpo principal de la camisa */}
@@ -200,6 +259,12 @@ export default function AgentAvatar({
         @keyframes aa-bar {
           from { transform: scaleY(0.35); }
           to   { transform: scaleY(1); }
+        }
+
+        /* Mic active dot */
+        @keyframes aa-mic {
+          from { opacity: 0.4; r: 1.5px; }
+          to   { opacity: 1;   r: 2.5px; }
         }
       `}</style>
     </div>
