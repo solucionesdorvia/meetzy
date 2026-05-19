@@ -160,6 +160,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [createdSiteId, setCreatedSiteId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [finalizingAvatar, setFinalizingAvatar] = useState(false);
+  const [creatingAgent, setCreatingAgent] = useState(false);
   const [rightTransition, setRightTransition] = useState<"in" | "out">("in");
 
   const isPro = userPlan === "pro" || userPlan === "elite";
@@ -456,6 +457,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
 
   async function finalizeSite() {
     if (!archetype || !agentType) return;
+    setCreatingAgent(true);
     let normalized = url.trim();
     if (!normalized.startsWith("http")) normalized = `https://${normalized}`;
 
@@ -485,6 +487,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     const j = (await r.json()) as { siteId?: string; error?: string };
     if (!r.ok) {
       push(j.error ?? "Error al crear el sitio", "error");
+      setCreatingAgent(false);
       return;
     }
 
@@ -515,6 +518,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       }
     }
 
+    setCreatingAgent(false);
     setCelebrate(true);
     window.setTimeout(() => setCelebrate(false), 2200);
     setMacroStep(4);
@@ -559,7 +563,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setAgentType(null); setPersonality("amigable"); setWelcomeMessage("");
     setPrimary(null); setSubtype(""); setBrandColor("#6366f1"); setBrandColor2("#8b5cf6");
     setLogoUrl(null); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
-    setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false);
+    setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false); setCreatingAgent(false);
     setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText(""); setStyleModifier("amigable");
     setRightTransition("in");
   }
@@ -966,7 +970,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                   disabled={
                     (macroStep === 1 && !canProceedForward) ||
                     (macroStep === 2 && !canProceedForward) ||
-                    (macroStep === 3 && !isPro && !canProceedForward) ||
+                    (macroStep === 3 && !isPro && (!canProceedForward || creatingAgent)) ||
                     (macroStep === 3 && isPro && avatarMicro === "generating") ||
                     (macroStep === 3 && isPro && avatarMicro === "pick" && !canPickGenerate) ||
                     (macroStep === 3 && isPro && avatarMicro === "done") ||
@@ -975,7 +979,12 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                   className="dash-focus-ring gap-2 rounded-[10px] bg-[var(--accent)] px-5 hover:bg-[var(--accent-hover)]"
                   onClick={() => onPrimaryAction()}
                 >
-                  {macroStep === 3 && !isPro ? (
+                  {macroStep === 3 && !isPro && creatingAgent ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Creando tu agente…
+                    </>
+                  ) : macroStep === 3 && !isPro ? (
                     <>
                       Crear mi agente
                       <ArrowRight className="size-4" />
