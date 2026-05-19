@@ -83,12 +83,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const site = await findSite(siteId, dbUser.id);
     if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
 
-    await prisma.$transaction(async (tx) => {
-      // Messages are cascade-deleted by Conversation (onDelete: Cascade) — no manual step needed
-      await tx.visitorProfile.deleteMany({ where: { siteId: site.id } });
-      await tx.conversation.deleteMany({ where: { siteId: site.id } });
-      await tx.site.delete({ where: { id: site.id } });
-    });
+    // All child tables (Conversation, VisitorProfile, KnowledgeEntry, Message, VisitorNote)
+    // have onDelete: Cascade — a single site.delete is atomic and avoids transaction deadlocks.
+    await prisma.site.delete({ where: { id: site.id } });
 
     return NextResponse.json({ success: true });
   } catch (e) {

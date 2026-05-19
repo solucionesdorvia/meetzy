@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import BrandAvatar from "@/components/avatar/BrandAvatar";
+import AgentFace from "@/components/avatar/AgentFace";
 import { type BehaviorTrackerResult } from "@/lib/behavior-tracker";
 
 function useDemoAvatarSize() {
@@ -78,12 +78,9 @@ export default function MiloDemo({ tracker }: MiloDemoProps) {
                 transform: "scale(1.6)",
               }}
             />
-            <BrandAvatar
-              character="alex"
-              brandColor="#7c6cff"
-              brandName="Meetzy"
-              animation="idle"
+            <AgentFace
               size={demoAvatarSize}
+              brandColor="#7c6cff"
               className="relative z-10 milo-glow"
             />
           </div>
