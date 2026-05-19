@@ -33,6 +33,9 @@ const ARCHETYPE_CHARACTER: Record<AvatarArchetype, string> = {
   star: "cute golden star mascot with arms and expressive face",
   rocket: "cute rocket ship mascot with face",
   diamond: "cute faceted gem mascot with cartoon eyes",
+  car: "cute animated cartoon car mascot with headlight eyes and windshield smile",
+  nut: "cute animated nut or seed mascot with expressive face and tiny arms",
+  bag: "cute animated product bag or package mascot with friendly face",
 };
 
 export function archetypeToCharacterType(archetype: AvatarArchetype): string {
