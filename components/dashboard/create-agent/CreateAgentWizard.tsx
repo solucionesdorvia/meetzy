@@ -1292,8 +1292,6 @@ function StepAgent({
 const STARTER_CHARS = [
   { primary: "human" as PrimaryChar, subtype: "male", emoji: "👤", label: "Hombre" },
   { primary: "human" as PrimaryChar, subtype: "female", emoji: "👩", label: "Mujer" },
-  { primary: "perro" as PrimaryChar, subtype: "perro", emoji: "🐶", label: "Perro" },
-  { primary: "gato" as PrimaryChar, subtype: "gato", emoji: "🐱", label: "Gato" },
 ] as const;
 
 function StepAvatarPick({
@@ -1360,7 +1358,7 @@ function StepAvatarPick({
         {/* Character tiles */}
         <div>
           <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Personaje</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3">
             {STARTER_CHARS.map((c) => {
               const sel = selectedChar?.subtype === c.subtype && selectedChar?.primary === c.primary;
               return (
