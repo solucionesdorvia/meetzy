@@ -685,7 +685,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                       </div>
                       <p className="text-[12px] font-semibold text-[var(--text-primary)]">{selected.title}</p>
                       <p className="text-[11px] leading-snug text-[var(--text-tertiary)]">
-                        Generando tu personaje con IA…
+                        Generando tu avatar…
                       </p>
                     </div>
                   )}
