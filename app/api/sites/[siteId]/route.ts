@@ -83,13 +83,23 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const site = await findSite(siteId, dbUser.id);
     if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
 
-    // All child tables (Conversation, VisitorProfile, KnowledgeEntry, Message, VisitorNote)
-    // have onDelete: Cascade — a single site.delete is atomic and avoids transaction deadlocks.
+    // Borrado explícito en orden para evitar FK violations en producción
+    // (no usamos $transaction para evitar deadlocks; las cascadas de DB son bonus)
+    await prisma.message.deleteMany({
+      where: { conversation: { siteId: site.id } },
+    });
+    await prisma.visitorNote.deleteMany({
+      where: { profile: { siteId: site.id } },
+    });
+    await prisma.conversation.deleteMany({ where: { siteId: site.id } });
+    await prisma.visitorProfile.deleteMany({ where: { siteId: site.id } });
+    await prisma.knowledgeEntry.deleteMany({ where: { siteId: site.id } });
     await prisma.site.delete({ where: { id: site.id } });
 
     return NextResponse.json({ success: true });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[DELETE site]", e);
+    const msg = e instanceof Error ? e.message : "Internal server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
