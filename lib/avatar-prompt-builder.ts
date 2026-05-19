@@ -69,7 +69,9 @@ export type AvatarArchetype =
   | "star"
   | "rocket"
   | "diamond"
-  | "car";
+  | "car"
+  | "nut"
+  | "bag";
 
 export interface AvatarPromptConfig {
   archetype: AvatarArchetype;
@@ -104,6 +106,8 @@ const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
   rocket: `cute rocket ship mascot with friendly face on the window, 3D cartoon style, floating in air no floor no ground no shadow`,
   diamond: `cute faceted gem mascot with cartoon eyes and smile, floating no floor no shadow`,
   car: `cute animated cartoon car mascot, classic vintage style, big round headlight eyes, friendly windshield smile, shiny paint, floating no floor no shadow`,
+  nut: `cute animated nut or seed mascot (walnut, almond, or pistachio style), expressive cartoon face, tiny arms, floating no floor no shadow`,
+  bag: `cute animated product bag or package mascot, friendly face on the front, brand-colored packaging, floating no floor no shadow`,
 };
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
@@ -229,6 +233,14 @@ export function mapSelectionToArchetype(
     rocket: "rocket",
     diamond: "diamond",
     car: "car",
+    nuez: "nut",
+    almendra: "nut",
+    pistacho: "nut",
+    semilla: "nut",
+    bolsa: "bag",
+    paquete: "bag",
+    nut: "nut",
+    bag: "bag",
   };
   return om[subtype] ?? "cup";
 }

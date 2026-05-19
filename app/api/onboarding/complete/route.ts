@@ -23,6 +23,8 @@ const Arch = z.enum([
   "rocket",
   "diamond",
   "car",
+  "nut",
+  "bag",
 ]);
 
 const BodySchema = z.object({
@@ -72,6 +74,8 @@ function dbAvatarFromArchetype(archetype: AvatarArchetype) {
     rocket: "cohete",
     diamond: "diamante",
     car: "auto",
+    nut: "nuez",
+    bag: "bolsa",
   };
   return { avatarType: "object", avatarSubtype: om[archetype] ?? "taza" };
 }

@@ -27,6 +27,8 @@ const FALLBACK_SUGGESTIONS: CharacterSuggestion[] = [
   { id: "rocket",       emoji: "🚀", title: "Cohete",                 description: "Dinámico y futurista. Ideal para tech/startups.",  archetype: "rocket",       promptHint: "cute rocket mascot with friendly face on the window",        gradientFrom: "#0ea5e9", gradientTo: "#0369a1" },
   { id: "star",         emoji: "⭐", title: "Estrella",               description: "Brillante y positivo. Universal.",                 archetype: "star",         promptHint: "cute golden star mascot with arms and expressive face",      gradientFrom: "#f97316", gradientTo: "#c2410c" },
   { id: "car",          emoji: "🚗", title: "Auto animado",           description: "Perfecto para negocios automotrices.",              archetype: "car",          promptHint: "cute animated cartoon car mascot with big headlight eyes",   gradientFrom: "#dc2626", gradientTo: "#991b1b" },
+  { id: "nut",          emoji: "🥜", title: "Fruto seco animado",     description: "Ideal para marcas de snacks naturales.",            archetype: "nut",          promptHint: "cute animated almond mascot with big eyes and tiny arms",   gradientFrom: "#92400e", gradientTo: "#78350f" },
+  { id: "bag",          emoji: "📦", title: "Paquete animado",         description: "Tu producto como mascota. Directo y memorable.",    archetype: "bag",          promptHint: "cute animated product bag mascot with friendly face",        gradientFrom: "#065f46", gradientTo: "#064e3b" },
 ];
 
 export async function POST(req: Request) {
@@ -62,7 +64,7 @@ Respondé siempre en JSON con esta estructura exacta:
       "emoji": string (un emoji representativo),
       "title": string (nombre del personaje en español, max 30 chars),
       "description": string (por qué encaja con este negocio, max 80 chars, en rioplatense),
-      "archetype": string (uno de: human_male, human_female, dog, cat, rabbit, fox, panda, bear, orange, apple, cup, star, rocket, diamond, car),
+      "archetype": string (uno de: human_male, human_female, dog, cat, rabbit, fox, panda, bear, orange, apple, cup, star, rocket, diamond, car, nut, bag),
       "promptHint": string (frase descriptiva en inglés para el prompt de imagen, max 100 chars),
       "gradientFrom": string (color hex que represente al personaje),
       "gradientTo": string (color hex más oscuro/complementario)
@@ -70,17 +72,21 @@ Respondé siempre en JSON con esta estructura exacta:
   ]
 }
 Reglas:
-- Siempre incluí al menos una opción humana (masculina o femenina) y una animal/objeto
+- Siempre incluí al menos una opción humana (masculina o femenina)
 - El personaje más sugerido debe ir primero
-- Pensá en el rubro y usá personajes que tengan sentido cultural para Argentina
+- Pensá en el rubro del negocio y personalizá tanto el archetype como el promptHint
+- El campo "promptHint" es CLAVE: debe describir el personaje EXACTO y específico para ese negocio (en inglés, max 100 chars). No uses descripciones genéricas.
 - Para salud/vet: perro/gato/persona con guardapolvo
-- Para tech/startup: robot/cohete/estrella
-- Para comida/café: taza/fruta/persona chef
+- Para tech/startup: cohete/estrella/persona tech
+- Para comida/café: taza/fruta específica/persona chef
+- Para autos/automotriz/taller/concesionaria: car (auto animado estilo vintage)
+- Para transporte/logística: car, cohete
+- Para frutos secos/nueces/semillas/snacks naturales: nut (almendra, nuez, pistacho animado)
+- Para marcas de productos/packaging: bag (paquete animado con cara)
 - Para legal/finanzas: persona profesional
-- Para educación: persona, libro, estrella
-- Para autos/automotriz/taller/concesionaria: auto (car), persona mecánico
-- Para transporte/logística: cohete, auto (car), persona
-- Los prompts en inglés deben ser descriptivos del personaje específico`,
+- Para educación: persona, estrella
+- Para cualquier producto específico: usá el archetype más cercano y describí el personaje exacto en promptHint
+- Los prompts en inglés en promptHint deben ser muy específicos: "cute animated walnut mascot with big eyes and tiny arms" no "cute nut mascot"`,
         },
         {
           role: "user",
@@ -98,7 +104,7 @@ Sugerí 6 personajes únicos e ideales para el avatar de IA de este negocio.`,
     // Sanitize: map any invalid archetype to the closest valid one
     const VALID_ARCHETYPES = new Set([
       "human_male", "human_female", "dog", "cat", "rabbit", "fox",
-      "panda", "bear", "orange", "apple", "cup", "star", "rocket", "diamond", "car",
+      "panda", "bear", "orange", "apple", "cup", "star", "rocket", "diamond", "car", "nut", "bag",
     ]);
     const ARCHETYPE_MAP: Record<string, string> = {
       robot: "rocket", human: "human_male", woman: "human_female",
@@ -108,6 +114,7 @@ Sugerí 6 personajes únicos e ideales para el avatar de IA de este negocio.`,
       fox_animal: "fox", bunny: "rabbit",
       vehicle: "car", truck: "car", bus: "car", motorcycle: "car",
       auto: "car", automobile: "car", coche: "car",
+      nut: "nut", bag: "bag", seed: "nut", almond: "nut", walnut: "nut", package: "bag", pouch: "bag",
     };
     const suggestions = raw.map((s) => ({
       ...s,
