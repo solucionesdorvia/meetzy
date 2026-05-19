@@ -50,7 +50,7 @@ export default function AgentAvatar({
   const bgLight   = adjust(brandColor, 196);
   const bgMid     = adjust(brandColor, 182);
   const showLogo  = !!logoUrl && size >= 72;
-  const showWave  = isSpeaking && size >= 64;
+  const showWave  = isSpeaking && size >= 72;
   const faceUrl   = gender === "female" ? FEMALE_FACE_URL : MALE_FACE_URL;
 
   // Glow ring cuando habla
@@ -111,24 +111,7 @@ export default function AgentAvatar({
         {/* Fondo */}
         <circle cx="50" cy="50" r="50" fill={`url(#bg-${gid})`} />
 
-        {/* ── Headset banda — detrás de la cara ────────────────────────── */}
-        {/* Se dibuja ANTES de la imagen para quedar detrás del pelo */}
-        <path
-          d="M26 56 C24 44, 32 22, 50 20 C68 22, 76 44, 74 56"
-          fill="none"
-          stroke={adjust(brandColor, -35)}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M26 56 C24 44, 32 22, 50 20 C68 22, 76 44, 74 56"
-          fill="none"
-          stroke={brandColor}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-
-        {/* Imagen de cara */}
+        {/* Imagen de cara (headset integrado en la ilustración) */}
         <image
           href={faceUrl}
           x="0" y="-8"
@@ -136,49 +119,6 @@ export default function AgentAvatar({
           clipPath={`url(#clip-${gid})`}
           preserveAspectRatio="xMidYMid meet"
         />
-
-        {/* ── Headset piezas — delante de la cara ──────────────────────── */}
-
-        {/* Auricular izquierdo — pegado al lado de la cabeza */}
-        <ellipse cx="23" cy="57" rx="5.5" ry="6.5" fill={adjust(brandColor, -35)} />
-        <ellipse cx="23" cy="57" rx="4"   ry="5"   fill={brandColor} />
-        <ellipse cx="23" cy="57" rx="2"   ry="2.5" fill={adjust(brandColor, -55)} />
-
-        {/* Auricular derecho */}
-        <ellipse cx="77" cy="57" rx="5.5" ry="6.5" fill={adjust(brandColor, -35)} />
-        <ellipse cx="77" cy="57" rx="4"   ry="5"   fill={brandColor} />
-        <ellipse cx="77" cy="57" rx="2"   ry="2.5" fill={adjust(brandColor, -55)} />
-
-        {/* Brazo del micrófono — sale del auricular izq, curva al frente */}
-        <path
-          d="M19 62 Q16 70 27 72"
-          fill="none"
-          stroke={adjust(brandColor, -35)}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-        <path
-          d="M19 62 Q16 70 27 72"
-          fill="none"
-          stroke={brandColor}
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-
-        {/* Cápsula mic */}
-        <rect x="24" y="70" width="6" height="4" rx="2" fill={adjust(brandColor, -35)} />
-        <rect x="25" y="70.6" width="4" height="2.8" rx="1.4" fill={brandColor} />
-
-        {/* LED activo cuando habla */}
-        {isSpeaking && (
-          <circle
-            cx="27" cy="72"
-            r="1.2"
-            fill="white"
-            opacity="0.95"
-            style={{ animation: "aa-mic 0.8s ease-in-out infinite alternate" }}
-          />
-        )}
 
         {/* ── Ropa: cubre la zona inferior de la imagen ────────────────── */}
 
