@@ -190,6 +190,8 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
       return;
     }
     setStep(2);
+    // Auto-generate preview as soon as user enters step 2
+    void handlePreview();
   }
 
   /* ── Step 2 handlers ── */
@@ -683,7 +685,7 @@ export default function AvatarCreatorWizard({ site }: WizardProps) {
                       </div>
                       <p className="text-[12px] font-semibold text-[var(--text-primary)]">{selected.title}</p>
                       <p className="text-[11px] leading-snug text-[var(--text-tertiary)]">
-                        Hacé click en "Preview rápido" para ver cómo queda tu personaje
+                        Generando tu personaje con IA…
                       </p>
                     </div>
                   )}
