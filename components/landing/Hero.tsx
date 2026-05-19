@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import AgentFace from "@/components/avatar/AgentFace";
+import AgentAvatar from "@/components/avatar/AgentAvatar";
 import { type BehaviorTrackerResult } from "@/lib/behavior-tracker";
 
 export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
@@ -102,7 +102,7 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
                 onMouseLeave={() => setHovered(false)}
                 onClick={openWidget}
               >
-                <AgentFace size={220} brandColor="#7c6cff" className="hero-face" />
+                <AgentAvatar size={220} brandColor="#7c6cff" className="hero-face" />
 
                 {/* Tooltip on hover */}
                 {hovered && (
@@ -155,7 +155,7 @@ export default function Hero({ tracker }: { tracker: BehaviorTrackerResult }) {
               border: "1px solid rgba(124,108,255,0.18)",
               maxWidth: 320,
             }}>
-              <AgentFace size={36} brandColor="#7c6cff" />
+              <AgentAvatar size={36} brandColor="#7c6cff" />
               <div>
                 <p suppressHydrationWarning style={{ fontSize: "0.78rem", color: "var(--c-text)", lineHeight: 1.45, margin: 0 }}>
                   {tracker.context.isReturnVisitor
