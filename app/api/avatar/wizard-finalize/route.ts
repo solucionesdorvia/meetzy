@@ -10,6 +10,7 @@ const BodySchema = z.object({
   agentName: z.string().min(1).max(80),
   archetype: z.string().min(1),
   logoUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
+  logoMode: z.enum(["badge", "inspiration"]).optional(),
 });
 
 export const maxDuration = 120;
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
     // Full pipeline: bg removal + Cloudinary upload
     const { imageUrl } = await generateAvatarPipelineFromFalUrl(
       d.falUrl,
-      { logoUrl: d.logoUrl?.trim() || undefined, agentName: d.agentName },
+      { logoUrl: d.logoUrl?.trim() || undefined, agentName: d.agentName, logoMode: d.logoMode ?? "badge" },
       { requireCloudinary: true, cloudinaryPublicIdBase: d.agentName },
     );
 

@@ -16,6 +16,7 @@ const BodySchema = z.object({
   clothingText: z.string().max(40).optional(),
   styleModifier: z.string().max(40).optional(),
   variation: z.number().int().min(0).max(20).optional(),
+  logoMode: z.enum(["badge", "inspiration"]).optional(),
 });
 
 export const maxDuration = 60;
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
           clothingText: d.clothingText,
           styleModifier: d.styleModifier,
           variation: d.variation,
+          logoMode: d.logoMode,
         })
       : buildStarterPrompt({
           archetype: d.archetype as "human_male" | "human_female",

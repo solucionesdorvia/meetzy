@@ -290,13 +290,13 @@ export type GenerateAvatarOptions = {
 
 export async function generateAvatarPipelineFromFalUrl(
   falUrl: string,
-  config: Partial<Pick<AvatarConfig, "logoUrl" | "agentName">> = {},
+  config: Partial<Pick<AvatarConfig, "logoUrl" | "agentName">> & { logoMode?: "badge" | "inspiration" } = {},
   options: { requireCloudinary?: boolean; cloudinaryPublicIdBase?: string } = {},
 ): Promise<{ imageUrl: string; buffer: Buffer }> {
   const requireCloudinary = options.requireCloudinary ?? false;
   let transparentBuf = await removeBackgroundWithBirefnet(falUrl);
 
-  if (config.logoUrl?.trim()) {
+  if (config.logoUrl?.trim() && config.logoMode !== "inspiration") {
     try {
       transparentBuf = await compositeLogoOnAvatarBuffer(transparentBuf, config.logoUrl.trim());
     } catch (e) {

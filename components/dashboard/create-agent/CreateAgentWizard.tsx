@@ -103,6 +103,7 @@ type Persisted = {
   brandColor: string;
   brandColor2: string;
   logoUrl: string | null;
+  logoMode: "badge" | "inspiration";
   avatarUrl: string | null;
   genFallback: boolean;
   createdSiteId: string | null;
@@ -143,6 +144,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [brandColor, setBrandColor] = useState("#6366f1");
   const [brandColor2, setBrandColor2] = useState("#8b5cf6");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoMode, setLogoMode] = useState<"badge" | "inspiration">("badge");
   const [avatarMicro, setAvatarMicro] = useState<"pick" | "generating" | "done">("pick");
 
   const [genBusy, setGenBusy] = useState(false);
@@ -193,6 +195,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       brandColor,
       brandColor2,
       logoUrl,
+      logoMode,
       avatarUrl,
       genFallback,
       createdSiteId,
@@ -222,6 +225,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     brandColor,
     brandColor2,
     logoUrl,
+    logoMode,
     avatarUrl,
     genFallback,
     createdSiteId,
@@ -251,6 +255,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       if (typeof p.brandColor === "string") setBrandColor(p.brandColor);
       if (typeof p.brandColor2 === "string") setBrandColor2(p.brandColor2);
       if (typeof p.logoUrl === "string" || p.logoUrl === null) setLogoUrl(p.logoUrl);
+      if (p.logoMode === "badge" || p.logoMode === "inspiration") setLogoMode(p.logoMode);
       if (typeof p.avatarUrl === "string") setAvatarUrl(p.avatarUrl);
       if (typeof p.genFallback === "boolean") setGenFallback(p.genFallback);
       if (typeof p.createdSiteId === "string") setCreatedSiteId(p.createdSiteId);
@@ -412,6 +417,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
           clothingText: clothingText || undefined,
           styleModifier: styleModifier || undefined,
           variation,
+          logoMode,
         }),
       });
       const j = (await r.json()) as { previewUrl?: string; error?: string };
@@ -508,6 +514,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
             agentName: agentName.trim() || "Asistente",
             archetype: selectedSuggestion.archetype,
             logoUrl: logoUrl || undefined,
+            logoMode,
           }),
         });
         const fj = (await fr.json()) as { avatarUrl?: string; error?: string };
@@ -563,7 +570,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setSystemPrompt(""); setSitePreview(""); setAnalyzeBusy(false); setAnalyzeError(null); setAnalyzeSkipped(false);
     setAgentType(null); setPersonality("amigable"); setWelcomeMessage("");
     setPrimary(null); setSubtype(""); setBrandColor("#6366f1"); setBrandColor2("#8b5cf6");
-    setLogoUrl(null); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
+    setLogoUrl(null); setLogoMode("badge"); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
     setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false); setCreatingAgent(false);
     setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText(""); setStyleModifier("amigable");
     setRightTransition("in");
@@ -816,6 +823,8 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                       setBrandColor2={setBrandColor2}
                       logoUrl={logoUrl}
                       setLogoUrl={setLogoUrl}
+                      logoMode={logoMode}
+                      setLogoMode={setLogoMode}
                       clothingText={clothingText}
                       setClothingText={setClothingText}
                       avatarMicro={avatarMicro}
@@ -1406,6 +1415,8 @@ function StepAvatarPick({
   setBrandColor2,
   logoUrl,
   setLogoUrl,
+  logoMode,
+  setLogoMode,
   clothingText,
   setClothingText,
   avatarMicro,
@@ -1433,6 +1444,8 @@ function StepAvatarPick({
   setBrandColor2: (v: string) => void;
   logoUrl: string | null;
   setLogoUrl: (v: string | null) => void;
+  logoMode: "badge" | "inspiration";
+  setLogoMode: (v: "badge" | "inspiration") => void;
   clothingText: string;
   setClothingText: (v: string) => void;
   avatarMicro: "pick" | "generating" | "done";
@@ -1742,6 +1755,44 @@ function StepAvatarPick({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={logoUrl} alt="" className="size-10 rounded-lg object-contain" />
                 <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>Quitar</Button>
+              </div>
+            ) : null}
+            {logoUrl ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+                  Uso del logo
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {(
+                    [
+                      { value: "badge" as const, label: "Badge sobre el avatar", desc: "Se agrega como emblema sobre el personaje" },
+                      { value: "inspiration" as const, label: "Inspiración visual", desc: "Los colores y estilo guían la generación — sin overlay" },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setLogoMode(opt.value)}
+                      className={`flex items-start gap-2.5 rounded-[var(--radius-sm)] border px-3 py-2 text-left transition-all ${
+                        logoMode === opt.value
+                          ? "border-[var(--accent)] bg-[var(--accent-subtle)]"
+                          : "border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--accent-border)]"
+                      }`}
+                    >
+                      <div
+                        className={`mt-[3px] size-3.5 shrink-0 rounded-full border-2 transition-colors ${
+                          logoMode === opt.value
+                            ? "border-[var(--accent)] bg-[var(--accent)]"
+                            : "border-[var(--border-default)]"
+                        }`}
+                      />
+                      <div>
+                        <p className="text-[12px] font-medium text-[var(--text-primary)]">{opt.label}</p>
+                        <p className="text-[11px] text-[var(--text-tertiary)]">{opt.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>

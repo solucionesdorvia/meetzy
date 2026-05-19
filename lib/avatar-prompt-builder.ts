@@ -80,6 +80,7 @@ export interface AvatarPromptConfig {
   businessName: string;
   agentName: string;
   logoUrl?: string | null;
+  logoMode?: "badge" | "inspiration";
   /** Agent type drives accessory/expression modifier for human archetypes */
   agentType?: string;
   /** Extra variation suffix for regenerations */
@@ -119,9 +120,13 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
       ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "")
       : "";
   const logoInstruction = config.logoUrl
-    ? (isCar
-        ? `The car has a small brand badge or decal on its hood.`
-        : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`)
+    ? (config.logoMode === "inspiration"
+        ? (isCar
+            ? `The car's style is inspired by the brand identity — no physical logo overlay.`
+            : `This character's visual aesthetic is inspired by the brand's identity. No logo overlay — brand spirit woven into the design.`)
+        : (isCar
+            ? `The car has a small brand badge or decal on its hood.`
+            : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`))
     : "";
   const clothingHint = config.clothingText
     ? (isCar
@@ -175,12 +180,15 @@ export function buildWizardPrompt(config: {
   clothingText?: string;
   styleModifier?: string;
   variation?: number;
+  logoMode?: "badge" | "inspiration";
 }): string {
   const styleLine = config.styleModifier ? (STYLE_MODIFIERS[config.styleModifier] ?? "") : "";
   const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
-  const clothingHint = config.clothingText
-    ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
-    : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`;
+  const clothingHint = config.logoMode === "inspiration"
+    ? `The character embodies "${config.businessName}" brand identity — visual style and mood inspired by the brand logo aesthetic.`
+    : (config.clothingText
+        ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
+        : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`);
   const varSuffix =
     config.variation && config.variation > 0 ? `Unique variation ${config.variation}, slightly different pose.` : "";
 
