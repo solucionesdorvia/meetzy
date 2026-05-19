@@ -13,7 +13,7 @@ export function inferTrafficSource(
     if (h.includes("instagram")) return "instagram";
     if (h.includes("facebook") || h === "fb.com" || h.includes("fb.watch")) return "facebook";
     if (h.includes("linkedin")) return "linkedin";
-    if (h.includes("twitter") || h.includes("t.co") || h === "x.com") return "twitter";
+    if (h.includes("twitter") || h === "t.co" || h === "x.com") return "twitter";
     return "referral";
   } catch {
     return "direct";

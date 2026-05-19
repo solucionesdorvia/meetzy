@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
     if (ip && !country) {
       const g = lookupGeo(ip);
       if (g) {
-        country = g.country ?? null;
-        city = g.city ?? null;
+        country = g.country || null;
+        city = g.city || null;
       }
     }
 

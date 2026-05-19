@@ -6,7 +6,14 @@ declare global {
   interface Window { MEETZYCONFIG?: { siteId: string } }
 }
 declare const __MEETZY_APP_URL__: string;
-const APP_URL: string = typeof __MEETZY_APP_URL__ !== "undefined" ? __MEETZY_APP_URL__ : "https://app.meetzy.ai";
+// Derive API URL from the script's own src at runtime, falling back to build-time value.
+// This ensures the widget always calls back to the same server it was served from,
+// regardless of which environment (local, staging, production) it runs in.
+const _scriptSrc = (typeof document !== "undefined" && document.currentScript instanceof HTMLScriptElement)
+  ? document.currentScript.src : "";
+const _scriptOrigin = _scriptSrc ? new URL(_scriptSrc).origin : "";
+const _buildUrl = typeof __MEETZY_APP_URL__ !== "undefined" ? __MEETZY_APP_URL__ : "https://app.meetzy.ai";
+const APP_URL: string = _scriptOrigin || _buildUrl;
 
 /* ══════════════════════════════════════
    CONFIG TYPES
