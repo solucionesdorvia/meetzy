@@ -17,7 +17,6 @@ import {
 import Color from "color";
 import AvatarSvgPreview from "@/components/onboarding/AvatarSvgPreview";
 import ConfettiCanvas from "@/components/onboarding/ConfettiCanvas";
-import { SelectableTile } from "@/components/onboarding/SelectableTile";
 import InstallSnippet from "@/components/dashboard/InstallSnippet";
 import { resolveArchetype } from "@/components/onboarding/resolve-archetype";
 import type { PrimaryChar } from "@/components/onboarding/resolve-archetype";
@@ -59,19 +58,6 @@ const FUN_MESSAGES = [
 type MacroStep = 1 | 2 | 3 | 4;
 type Personality = "amigable" | "profesional" | "divertida" | "seria";
 
-function needsSecondary(primary: PrimaryChar | null): boolean {
-  if (!primary) return false;
-  return primary === "human" || primary === "fruta" || primary === "objeto" || primary === "animal";
-}
-
-function canProceedSecondary(primary: PrimaryChar | null, subtype: string): boolean {
-  if (!primary) return false;
-  if (primary === "human") return subtype === "male" || subtype === "female";
-  if (primary === "fruta") return ["naranja", "manzana"].includes(subtype);
-  if (primary === "objeto") return ["taza", "estrella", "cohete", "diamante"].includes(subtype);
-  if (primary === "animal") return ["perro", "gato", "conejo", "zorro", "panda", "oso"].includes(subtype);
-  return false;
-}
 
 function personalityLabel(p: Personality): string {
   switch (p) {
@@ -237,6 +223,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     styleModifier,
   ]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional: restore persisted form state on mount */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -269,6 +256,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       /* ignore */
     }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     persist();
@@ -286,16 +274,6 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [macroStep, isPro]);
-
-  function advanceCharPrimary(p: PrimaryChar) {
-    setPrimary(p);
-    setSubtype("");
-    if (p === "human" || p === "fruta" || p === "objeto" || p === "animal") {
-      /* wait for secondary */
-    } else {
-      setSubtype(p === "perro" ? "perro" : "gato");
-    }
-  }
 
   const previewStage = useMemo(() => {
     if (avatarUrl && !genFallback) return "image" as const;
@@ -783,7 +761,6 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                       analyzeBusy={analyzeBusy}
                       analyzeError={analyzeError}
                       setAnalyzeError={setAnalyzeError}
-                      analyzeSkipped={analyzeSkipped}
                       setAnalyzeSkipped={setAnalyzeSkipped}
                       sitePreview={sitePreview}
                       systemPrompt={systemPrompt}
@@ -807,7 +784,6 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                     <StepAvatarPick
                       isPro={isPro}
                       businessName={businessName}
-                      agentName={agentName}
                       primary={primary}
                       setPrimary={(p) => { setPrimary(p); setSubtype(p === "human" ? "" : p); setAvatarMicro("pick"); setAvatarUrl(null); }}
                       subtype={subtype}
@@ -836,7 +812,6 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
                       clothingText={clothingText}
                       setClothingText={setClothingText}
                       avatarMicro={avatarMicro}
-                      genBusy={genBusy}
                       genMessage={genMessage}
                       colorToast={colorToast}
                       setColorToast={setColorToast}
@@ -1105,7 +1080,6 @@ function StepBusiness({
   analyzeBusy,
   analyzeError,
   setAnalyzeError,
-  analyzeSkipped,
   setAnalyzeSkipped,
   sitePreview,
   systemPrompt,
@@ -1124,7 +1098,6 @@ function StepBusiness({
   analyzeBusy: boolean;
   analyzeError: string | null;
   setAnalyzeError: (v: string | null) => void;
-  analyzeSkipped: boolean;
   setAnalyzeSkipped: (v: boolean) => void;
   sitePreview: string;
   systemPrompt: string;
@@ -1629,7 +1602,6 @@ function LogoUploadSection({
 function StepAvatarPick({
   isPro,
   businessName,
-  agentName,
   primary,
   setPrimary,
   subtype,
@@ -1653,14 +1625,12 @@ function StepAvatarPick({
   clothingText,
   setClothingText,
   avatarMicro,
-  genBusy,
   genMessage,
   colorToast,
   setColorToast,
 }: {
   isPro: boolean;
   businessName: string;
-  agentName: string;
   primary: PrimaryChar | null;
   setPrimary: (p: PrimaryChar) => void;
   subtype: string;
@@ -1684,7 +1654,6 @@ function StepAvatarPick({
   clothingText: string;
   setClothingText: (v: string) => void;
   avatarMicro: "pick" | "generating" | "done";
-  genBusy: boolean;
   genMessage: string;
   colorToast: boolean;
   setColorToast: (v: boolean) => void;
