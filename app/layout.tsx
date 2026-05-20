@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
-import { ClerkProvider, Show, UserButton, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const syne = Syne({
@@ -84,5 +84,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
-// Re-export for use in nav components
-export { Show, UserButton, SignInButton, SignUpButton };

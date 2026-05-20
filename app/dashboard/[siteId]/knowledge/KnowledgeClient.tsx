@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { Trash2, Plus, Globe, FileText, HelpCircle, ChevronDown, ChevronUp, Loader2, Upload, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 
 interface KnowledgeEntry {
   id: string;
@@ -74,31 +75,30 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
         body.content = content;
       }
 
-      const res = await fetch(`/api/sites/${siteId}/knowledge`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = (await res.json()) as { entry?: KnowledgeEntry; error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Error al guardar.");
-        return;
+      try {
+        const res = await fetch(`/api/sites/${siteId}/knowledge`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = (await res.json()) as { entry?: KnowledgeEntry; error?: string };
+        if (!res.ok) {
+          setError(data.error ?? "Error al guardar.");
+          return;
+        }
+        setEntries((prev) => [data.entry!, ...prev]);
+        setTitle("");
+        setContent("");
+        setUrl("");
+        setFileData(null);
+        setShowForm(false);
+      } catch {
+        setError("Error de red al guardar. Revisá tu conexión e intentá de nuevo.");
       }
-      setEntries((prev) => [data.entry!, ...prev]);
-      setTitle("");
-      setContent("");
-      setUrl("");
-      setFileData(null);
-      setShowForm(false);
     });
   }
 
   async function handleDelete(id: string) {
-    const entry = entries.find((e) => e.id === id);
-    const confirmed = window.confirm(
-      `¿Eliminar "${entry?.title ?? "esta entrada"}"? Esta acción no se puede deshacer.`
-    );
-    if (!confirmed) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/sites/${siteId}/knowledge/${id}`, { method: "DELETE" });
@@ -320,18 +320,13 @@ export default function KnowledgeClient({ siteId, initialEntries, plan, limit }:
                   >
                     {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete(entry.id)}
-                    disabled={deletingId === entry.id}
-                    className="shrink-0 rounded p-1 text-[var(--text-tertiary)] hover:text-[#f87171] transition-colors"
-                  >
-                    {deletingId === entry.id ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="size-4" />
-                    )}
-                  </button>
+                  <ConfirmAction
+                    label={deletingId === entry.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                    confirmLabel="Eliminar"
+                    onConfirm={() => handleDelete(entry.id)}
+                    loading={deletingId === entry.id}
+                    className="shrink-0 rounded p-1 text-[var(--text-tertiary)] hover:text-[#f87171]"
+                  />
                 </div>
                 {isExpanded && (
                   <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3">

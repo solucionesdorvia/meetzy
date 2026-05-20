@@ -33,7 +33,9 @@ export default function VisitorsClient({
   const [items, setItems] = useState<VisitorProfile[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [intent, setIntent] = useState("all");
@@ -49,22 +51,32 @@ export default function VisitorsClient({
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFetchError(false);
     const sp = new URLSearchParams({
       page: String(page),
       intent,
       source,
     });
     if (debouncedSearch) sp.set("search", debouncedSearch);
-    const r = await fetch(`/api/sites/${sitePublicId}/visitors?${sp}`);
-    if (r.ok) {
-      const j = (await r.json()) as {
-        items: VisitorProfile[];
-        totalPages: number;
-      };
-      setItems(j.items);
-      setTotalPages(j.totalPages);
+    try {
+      const r = await fetch(`/api/sites/${sitePublicId}/visitors?${sp}`);
+      if (r.ok) {
+        const j = (await r.json()) as {
+          items: VisitorProfile[];
+          totalPages: number;
+          total?: number;
+        };
+        setItems(j.items);
+        setTotalPages(j.totalPages);
+        if (j.total !== undefined) setTotal(j.total);
+      } else {
+        setFetchError(true);
+      }
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [sitePublicId, page, intent, source, debouncedSearch]);
 
   useEffect(() => {
@@ -114,9 +126,11 @@ export default function VisitorsClient({
           <option value="direct">Direct</option>
           <option value="facebook">Facebook</option>
         </select>
-        <Button type="button" size="sm" variant="secondary" onClick={() => void load()} className="shrink-0">
-          Aplicar
-        </Button>
+        {total !== null && (
+          <span className="shrink-0 text-[11px] tabular-nums text-[var(--text-tertiary)] whitespace-nowrap">
+            {total} visitante{total !== 1 ? "s" : ""}
+          </span>
+        )}
         <a
           href={`/api/sites/${sitePublicId}/emails?format=csv`}
           download
@@ -128,8 +142,23 @@ export default function VisitorsClient({
         </a>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
+      {fetchError ? (
+        <div className="dash-empty dash-empty--page">
+          <p className="mb-4 text-3xl" aria-hidden>⚠️</p>
+          <h3 className="mb-2 font-syne text-lg font-bold text-[var(--text-primary)]">Error al cargar</h3>
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+            No se pudieron obtener los visitantes. Revisá tu conexión e intentá de nuevo.
+          </p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-6 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : loading ? (
+        <div className="space-y-3" aria-busy="true" aria-label="Cargando visitantes">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="dash-skeleton h-16" />
           ))}

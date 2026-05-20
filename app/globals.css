@@ -1269,14 +1269,6 @@ button.onboard-primary-cta:focus-visible {
   background-size: 200% 100%;
   animation: product-shimmer 1.5s ease infinite;
 }
-@keyframes dash-skel {
-  0% {
-    background-position: 220% 0;
-  }
-  100% {
-    background-position: -220% 0;
-  }
-}
 
 .dash-segmented {
   display: inline-flex;
@@ -2513,6 +2505,92 @@ body::after {
     opacity: 0.6;
     transform: scale(0.85);
   }
+}
+
+/* ──────────────────────────────────────────
+   QUALITY IMPROVEMENTS — added 2025-05
+   ─────────────────────────────────────── */
+
+/* Sticky filter bar: stays visible while scrolling long lists */
+.dash-filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-base);
+  /* Slight padding + border to separate from content below */
+  padding-block: 12px;
+  margin-inline: -2px;
+  padding-inline: 2px;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  margin-bottom: 2rem;
+}
+
+/* Hide horizontal scrollbar on filter bar (still scrollable) */
+.dash-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+.dash-filter-bar {
+  scrollbar-width: none;
+}
+
+/* Improved focus ring for accessibility */
+.meetzy-product-ui :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Smooth table row transitions */
+.dash-table-wrap table tbody tr {
+  transition: background 100ms ease;
+}
+
+/* Make table "Ver perfil" links always discoverable */
+.dash-table-wrap .link-accent {
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+.dash-table-wrap tr:hover .link-accent {
+  opacity: 1;
+}
+
+/* Two-step confirm button: pulsing border while confirming */
+button[aria-pressed="true"] {
+  animation: confirm-pulse 1.5s ease infinite;
+}
+@keyframes confirm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+}
+
+/* Better scrollbar on overflow areas */
+.meetzy-product-ui [data-scrollable] {
+  scrollbar-color: rgba(99, 102, 241, 0.25) transparent;
+  scrollbar-width: thin;
+}
+
+/* Improved conversation list hover */
+.conversation-row {
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+/* Knowledge entry expand transition */
+.knowledge-expand-body {
+  animation: fade-in 150ms ease forwards;
+}
+
+/* Score badge */
+.score-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  white-space: nowrap;
+  tabular-nums: initial;
 }
 
 

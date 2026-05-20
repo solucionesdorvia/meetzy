@@ -38,17 +38,24 @@ export default function RecentConversationsPreview({
 }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await fetch(`/api/sites/${siteId}/conversations?page=1&intent=all`);
-    if (r.ok) {
-      const j = (await r.json()) as { items: Row[] };
-      setRows(j.items.slice(0, 5));
-    } else {
-      setRows([]);
+    setFetchError(false);
+    try {
+      const r = await fetch(`/api/sites/${siteId}/conversations?page=1&intent=all`);
+      if (r.ok) {
+        const j = (await r.json()) as { items: Row[] };
+        setRows(j.items.slice(0, 5));
+      } else {
+        setFetchError(true);
+      }
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [siteId]);
 
   useEffect(() => {
@@ -57,10 +64,25 @@ export default function RecentConversationsPreview({
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" aria-busy="true">
         <div className="dash-skeleton h-14" />
         <div className="dash-skeleton h-14" />
         <div className="dash-skeleton h-14" />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        <p className="text-[13px] text-[var(--text-secondary)]">No se pudieron cargar las conversaciones.</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="text-[12px] font-medium text-[var(--accent)] hover:underline"
+        >
+          Reintentar →
+        </button>
       </div>
     );
   }

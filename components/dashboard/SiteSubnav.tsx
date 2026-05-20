@@ -91,6 +91,7 @@ export default function SiteSubnav({
                   key={tab.key}
                   href={href}
                   data-active={isActive ? "true" : "false"}
+                  aria-current={isActive ? "page" : undefined}
                   className="shrink-0"
                 >
                   {tab.label}

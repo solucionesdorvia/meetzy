@@ -16,16 +16,13 @@ export default async function SiteSettingsPage({ params }: { params: Promise<{ s
 
   return (
     <div className="w-full">
-      <SiteSubnav siteId={siteId} siteName={site.name} active="settings" pageTitle="Configuración" />
-
-      <header className="mb-8 max-w-3xl">
-        <h1 className="font-syne text-[22px] font-bold tracking-[-0.03em] text-[var(--text-primary)]">
-          Configuración del agente
-        </h1>
-        <p className="mt-1.5 font-[family-name:var(--font-dm-sans)] text-[13px] font-light leading-relaxed text-[var(--text-secondary)]">
-          Identidad, instrucciones, colores de marca e integraciones.
-        </p>
-      </header>
+      <SiteSubnav
+        siteId={siteId}
+        siteName={site.name}
+        active="settings"
+        pageTitle="Configuración"
+        description="Identidad, instrucciones, colores de marca e integraciones."
+      />
 
       <SiteSettingsForm site={site} />
     </div>

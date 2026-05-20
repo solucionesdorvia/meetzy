@@ -539,11 +539,17 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   }
 
   const dirty = macroStep > 1 || url.trim().length > 0 || businessName.trim().length > 0 || agentName.trim().length > 0;
+  const [closeConfirming, setCloseConfirming] = useState(false);
 
   function requestClose() {
     if (!onRequestClose) return;
     if (dirty && macroStep < 4) {
-      if (!window.confirm("¿Cerrar? Perdés el progreso no guardado en esta sesión (se guarda en este dispositivo).")) return;
+      if (!closeConfirming) {
+        setCloseConfirming(true);
+        window.setTimeout(() => setCloseConfirming(false), 4000);
+        return;
+      }
+      setCloseConfirming(false);
     }
     onRequestClose();
   }
@@ -1063,11 +1069,22 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
         >
           <button
             type="button"
-            className="absolute right-3 top-3 z-[2] rounded-lg p-2 text-[var(--text-tertiary)] transition-colors duration-150 hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] md:right-4 md:top-4"
+            className={`absolute right-3 top-3 z-[2] rounded-lg px-2.5 py-1.5 text-[var(--text-tertiary)] transition-all duration-150 hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] md:right-4 md:top-4 ${
+              closeConfirming
+                ? "bg-[var(--error-subtle)] text-[var(--error)] ring-1 ring-[var(--error)]/25 hover:bg-[var(--error-subtle)] hover:text-[var(--error)]"
+                : "p-2"
+            }`}
             onClick={requestClose}
-            aria-label="Cerrar"
+            aria-label={closeConfirming ? "Hacer clic nuevamente para cerrar y perder el progreso" : "Cerrar"}
           >
-            <X className="size-5" />
+            {closeConfirming ? (
+              <span className="flex items-center gap-1.5 text-[12px] font-medium">
+                <X className="size-3.5" />
+                ¿Cerrar?
+              </span>
+            ) : (
+              <X className="size-5" />
+            )}
           </button>
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">{shell}</div>
         </div>

@@ -45,13 +45,20 @@ export default function VisitorDetailClient({
   const { push } = useProductToast();
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [contacted, setContacted] = useState(false);
 
   useEffect(() => {
     void (async () => {
-      const r = await fetch(`/api/sites/${sitePublicId}/visitors/${visitorId}`);
-      if (r.ok) setData((await r.json()) as Payload);
-      setLoading(false);
+      try {
+        const r = await fetch(`/api/sites/${sitePublicId}/visitors/${visitorId}`);
+        if (r.ok) setData((await r.json()) as Payload);
+        else setFetchError(true);
+      } catch {
+        setFetchError(true);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [sitePublicId, visitorId]);
 
@@ -88,12 +95,30 @@ export default function VisitorDetailClient({
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" aria-busy="true">
         <SiteSubnav siteId={sitePublicId} siteName={siteName} active="visitors" pageTitle="Perfil" />
         <div className="dash-skeleton h-52 rounded-[var(--radius-xl)]" />
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="dash-skeleton h-64 rounded-[var(--radius-lg)]" />
           <div className="dash-skeleton h-64 rounded-[var(--radius-lg)]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="space-y-6">
+        <SiteSubnav siteId={sitePublicId} siteName={siteName} active="visitors" pageTitle="Perfil" />
+        <div className="dash-empty dash-empty--page">
+          <p className="text-3xl mb-4" aria-hidden>⚠️</p>
+          <h3 className="font-syne text-lg font-bold text-[var(--text-primary)] mb-2">Error al cargar el perfil</h3>
+          <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
+            No se pudo obtener la información del visitante. Verificá tu conexión e intentá de nuevo.
+          </p>
+          <Link href={`/dashboard/${sitePublicId}/visitors`} className="btn-primary mt-6 inline-block" style={{ padding: "0.6rem 1.1rem", fontSize: "0.8rem" }}>
+            Volver a visitantes
+          </Link>
         </div>
       </div>
     );
@@ -161,9 +186,9 @@ export default function VisitorDetailClient({
             {/* Info */}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2.5 mb-1">
-                <h1 className="font-syne text-[22px] font-bold tracking-tight text-[var(--text-primary)]">
+                <h2 className="font-syne text-[22px] font-bold tracking-tight text-[var(--text-primary)]">
                   {profile.name?.trim() || "Visitante anónimo"}
-                </h1>
+                </h2>
                 <IntentBadge label={profile.maxIntentLabel} />
                 {contacted && (
                   <span className="flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[11px] font-medium text-emerald-400">

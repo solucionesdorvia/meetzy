@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatSmartDate } from "@/lib/format-date";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { X, Search, Download } from "lucide-react";
@@ -42,6 +43,7 @@ export default function ConversationsClient({
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [intent, setIntent] = useState("all");
   const [hasEmail, setHasEmail] = useState("all");
   const [search, setSearch] = useState("");
@@ -63,18 +65,26 @@ export default function ConversationsClient({
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFetchError(false);
     const sp = new URLSearchParams({ page: String(page), intent });
     if (hasEmail !== "all") sp.set("hasEmail", hasEmail);
     if (debouncedSearch) sp.set("search", debouncedSearch);
 
-    const r = await fetch(`/api/sites/${sitePublicId}/conversations?${sp}`);
-    if (r.ok) {
-      const j = (await r.json()) as { items: Row[]; totalPages: number; total: number };
-      setItems(j.items);
-      setTotalPages(j.totalPages);
-      setTotal(j.total);
+    try {
+      const r = await fetch(`/api/sites/${sitePublicId}/conversations?${sp}`);
+      if (r.ok) {
+        const j = (await r.json()) as { items: Row[]; totalPages: number; total: number };
+        setItems(j.items);
+        setTotalPages(j.totalPages);
+        setTotal(j.total);
+      } else {
+        setFetchError(true);
+      }
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [sitePublicId, page, intent, hasEmail, debouncedSearch]);
 
   useEffect(() => {
@@ -86,22 +96,27 @@ export default function ConversationsClient({
     setDialogOpen(true);
     setTranscript(null);
     setTranscriptLoading(true);
-    const r = await fetch(`/api/sites/${sitePublicId}/conversations/${row.id}`);
-    if (r.ok) {
-      const j = (await r.json()) as {
-        conversation: { messages: { role: string; content: string; createdAt: string }[] };
-      };
-      setTranscript(
-        j.conversation.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          createdAt: typeof m.createdAt === "string" ? m.createdAt : new Date(m.createdAt).toISOString(),
-        })),
-      );
-    } else {
+    try {
+      const r = await fetch(`/api/sites/${sitePublicId}/conversations/${row.id}`);
+      if (r.ok) {
+        const j = (await r.json()) as {
+          conversation: { messages: { role: string; content: string; createdAt: string }[] };
+        };
+        setTranscript(
+          j.conversation.messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            createdAt: typeof m.createdAt === "string" ? m.createdAt : new Date(m.createdAt).toISOString(),
+          })),
+        );
+      } else {
+        setTranscript([]);
+      }
+    } catch {
       setTranscript([]);
+    } finally {
+      setTranscriptLoading(false);
     }
-    setTranscriptLoading(false);
   };
 
   const onDialogOpenChange = (open: boolean) => {
@@ -135,6 +150,7 @@ export default function ConversationsClient({
                       <span className="text-[11px] text-[var(--text-tertiary)]">
                         {format(new Date(activeRow.createdAt), "d MMM yyyy, HH:mm", { locale: es })}
                       </span>
+
                       <span className="text-[var(--text-tertiary)] opacity-30">·</span>
                       <span className="text-[11px] text-[var(--text-tertiary)]">
                         {formatDurationSec(activeRow.sessionDuration)}
@@ -247,8 +263,17 @@ export default function ConversationsClient({
         </a>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
+      {fetchError ? (
+        <div className="dash-empty dash-empty--page">
+          <p className="mb-4 text-3xl" aria-hidden>⚠️</p>
+          <h3 className="mb-2 font-syne text-lg font-bold text-[var(--text-primary)]">Error al cargar</h3>
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+            No se pudieron obtener las conversaciones. Revisá tu conexión e intentá de nuevo.
+          </p>
+          <Button onClick={() => void load()} className="mt-6">Reintentar</Button>
+        </div>
+      ) : loading ? (
+        <div className="space-y-3" aria-busy="true" aria-label="Cargando conversaciones">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="dash-skeleton h-28" />
           ))}
@@ -294,7 +319,7 @@ export default function ConversationsClient({
                     {c.preview || <span className="text-[var(--text-tertiary)] italic">Sin preview</span>}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[var(--text-tertiary)]">
-                    <span>{format(new Date(c.createdAt), "d MMM, HH:mm", { locale: es })}</span>
+                    <span>{formatSmartDate(c.createdAt)}</span>
                     <span className="opacity-40">·</span>
                     <span>{formatDurationSec(c.sessionDuration)}</span>
                     <span className="opacity-40">·</span>
@@ -316,7 +341,7 @@ export default function ConversationsClient({
                   </span>
                   <Link
                     href={`/dashboard/${sitePublicId}/visitors/${c.visitorId}`}
-                    className="hidden text-[11px] font-medium text-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-100 hover:underline sm:block"
+                    className="hidden text-[11px] font-medium text-[var(--text-tertiary)] opacity-40 transition-all duration-150 group-hover:text-[var(--accent)] group-hover:opacity-100 hover:underline sm:block"
                     onClick={(e) => e.stopPropagation()}
                   >
                     Perfil →

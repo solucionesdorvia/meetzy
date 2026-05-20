@@ -243,13 +243,19 @@ export default function SiteSettingsForm({ site }: { site: SiteData }) {
             title="System prompt"
             description="Instrucciones base del agente. Podés personalizar su tono, restricciones y conocimiento específico."
           >
-            <textarea
-              name="systemPrompt"
-              value={form.systemPrompt}
-              onChange={handleChange}
-              rows={12}
-              className="dash-input resize-y min-h-[200px] font-[var(--font-dm-sans,_sans-serif)] leading-relaxed text-[13px]"
-            />
+            <div className="relative">
+              <textarea
+                id="systemPrompt"
+                name="systemPrompt"
+                value={form.systemPrompt}
+                onChange={handleChange}
+                rows={12}
+                className="dash-input resize-y min-h-[200px] font-[var(--font-dm-sans,_sans-serif)] leading-relaxed text-[13px]"
+              />
+              <span className="pointer-events-none absolute bottom-2.5 right-3 text-[10px] tabular-nums text-[var(--text-tertiary)]">
+                {form.systemPrompt.length.toLocaleString("es")} car.
+              </span>
+            </div>
           </Section>
 
           <div className="dash-divider" />

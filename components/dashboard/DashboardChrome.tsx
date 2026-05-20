@@ -207,6 +207,7 @@ export default function DashboardChrome({
             <Link
               href={DASH}
               data-active={pathname === DASH || pathname === `${DASH}/` ? "true" : "false"}
+              aria-current={pathname === DASH || pathname === `${DASH}/` ? "page" : undefined}
               className="product-sidebar-link"
               title={collapsed ? "Mis agentes" : undefined}
             >
@@ -245,6 +246,7 @@ export default function DashboardChrome({
                       key={suffix || "root"}
                       href={href}
                       data-active={active ? "true" : "false"}
+                      aria-current={active ? "page" : undefined}
                       className="product-sidebar-link"
                       title={collapsed ? label : undefined}
                     >
@@ -333,7 +335,7 @@ export default function DashboardChrome({
             );
           }
           return (
-            <Link key={item.href} href={item.href} data-active={active ? "true" : "false"} className="min-w-[56px]">
+            <Link key={item.href} href={item.href} data-active={active ? "true" : "false"} aria-current={active ? "page" : undefined} className="min-w-[56px]">
               <item.Icon className="mx-auto size-5" strokeWidth={1.75} />
               {item.label}
             </Link>

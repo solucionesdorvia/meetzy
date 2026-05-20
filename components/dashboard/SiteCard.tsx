@@ -54,13 +54,6 @@ export default function SiteCard({ site }: { site: SiteCardModel }) {
   const [active, setActive] = useState(site.isActive);
   const [toggling, setToggling] = useState(false);
 
-  const initials = site.agentName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   async function toggleActive() {
     setToggling(true);
     try {

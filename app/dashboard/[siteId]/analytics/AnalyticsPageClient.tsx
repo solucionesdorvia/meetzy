@@ -7,7 +7,7 @@ import HeatmapChart from "@/components/dashboard/HeatmapChart";
 import TopQuestions from "@/components/dashboard/TopQuestions";
 import { useProductToast } from "@/components/providers/product-toast";
 import { formatDurationSec } from "@/lib/format-duration";
-import { Download, RefreshCw } from "lucide-react";
+import { Copy, Check, Download } from "lucide-react";
 import Link from "next/link";
 import IntentBadge from "@/components/dashboard/IntentBadge";
 
@@ -67,6 +67,18 @@ export default function AnalyticsPageClient({
   const [emails, setEmails] = useState<EmailRow[]>([]);
   const [qLoading, setQLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+
+  const copyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(email);
+      push("Email copiado", "success");
+      window.setTimeout(() => setCopiedEmail(null), 2000);
+    } catch {
+      push("No se pudo copiar", "error");
+    }
+  };
 
   const load = useCallback(async (): Promise<boolean> => {
     setLoading(true);
@@ -87,10 +99,14 @@ export default function AnalyticsPageClient({
 
   useEffect(() => {
     void (async () => {
-      const r = await fetch(`/api/sites/${sitePublicId}/emails`);
-      if (r.ok) {
-        const j = (await r.json()) as { items: EmailRow[] };
-        setEmails(j.items);
+      try {
+        const r = await fetch(`/api/sites/${sitePublicId}/emails`);
+        if (r.ok) {
+          const j = (await r.json()) as { items: EmailRow[] };
+          setEmails(j.items);
+        }
+      } catch {
+        // emails section will remain empty — non-critical
       }
     })();
   }, [sitePublicId]);
@@ -257,12 +273,26 @@ export default function AnalyticsPageClient({
                   <IntentBadge label={e.intentLabel} />
                   <span className="text-[11px] tabular-nums text-[var(--text-tertiary)]">{e.intentScore} pts</span>
                   {e.email && (
-                    <a
-                      href={`mailto:${e.email}`}
-                      className="text-[11px] font-medium text-[var(--accent)] hover:underline"
-                    >
-                      Escribir →
-                    </a>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void copyEmail(e.email!)}
+                        title="Copiar email"
+                        className="flex items-center justify-center rounded p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--accent)]"
+                      >
+                        {copiedEmail === e.email ? (
+                          <Check className="size-3 text-[var(--success)]" />
+                        ) : (
+                          <Copy className="size-3" />
+                        )}
+                      </button>
+                      <a
+                        href={`mailto:${e.email}`}
+                        className="text-[11px] font-medium text-[var(--accent)] hover:underline"
+                      >
+                        Escribir →
+                      </a>
+                    </>
                   )}
                 </div>
               </div>

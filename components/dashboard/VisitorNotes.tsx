@@ -154,7 +154,7 @@ export default function VisitorNotes({
                 type="button"
                 onClick={() => void handleDelete(note.id)}
                 disabled={deletingId === note.id}
-                className="shrink-0 self-start rounded-[var(--radius-sm)] p-1 text-[var(--text-tertiary)] opacity-0 transition-all group-hover:opacity-100 hover:bg-[rgba(248,113,113,0.12)] hover:text-[#f87171] disabled:opacity-40"
+                className="shrink-0 self-start rounded-[var(--radius-sm)] p-1 text-[var(--text-tertiary)] opacity-30 transition-all group-hover:opacity-100 hover:bg-[rgba(248,113,113,0.12)] hover:text-[#f87171] disabled:opacity-30"
                 aria-label="Eliminar nota"
               >
                 {deletingId === note.id

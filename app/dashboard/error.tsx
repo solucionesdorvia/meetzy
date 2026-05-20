@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function DashboardError({
   error,
   reset,
@@ -7,26 +9,52 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isDev = process.env.NODE_ENV === "development";
+
   return (
-    <div className="max-w-lg mx-auto py-16 px-4 text-center">
-      <h1 className="font-syne font-bold text-xl text-[var(--text-primary)] mb-2">No pudimos cargar el dashboard</h1>
-      <p className="text-sm mb-4 leading-relaxed text-[var(--text-secondary)]">
-        Casi siempre es la base en Railway: falta una migración (columnas nuevas en <code className="font-mono text-[12px]">Site</code>) o{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1.5 py-0.5 font-mono text-[13px] text-[var(--accent)]">DATABASE_URL</code>{" "}
-        no está referenciando el plugin Postgres del mismo proyecto. En Railway abrí <strong className="text-[var(--text-primary)]">Deployments → último deploy → Pre-deploy</strong> y buscá errores de{" "}
-        <code className="font-mono text-[12px] text-[var(--text-tertiary)]">prisma migrate deploy</code>. Si falló, redeploy después de arreglar la URL; si no hay Pre-deploy, el servicio puede estar ignorando <code className="font-mono text-[11px]">railway.toml</code> — configurá el comando ahí o en Settings.
-      </p>
-      {process.env.NODE_ENV === "development" && error.message ? (
-        <p className="text-left text-xs font-mono mb-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-[var(--text-secondary)] break-words">
-          {error.message}
-        </p>
-      ) : null}
-      {error.digest ? (
-        <p className="text-xs mb-6 font-mono text-[var(--text-tertiary)]">digest: {error.digest}</p>
-      ) : null}
-      <button type="button" onClick={reset} className="btn-primary">
-        Reintentar
-      </button>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="w-full max-w-md rounded-[var(--radius-xl)] border border-[var(--error)]/20 bg-[var(--error-subtle)] p-8">
+        <p className="mb-5 text-3xl" aria-hidden>⚠️</p>
+        <h2 className="mb-2 font-syne text-[20px] font-bold tracking-tight text-[var(--text-primary)]">
+          No pudimos cargar el dashboard
+        </h2>
+
+        {isDev && error.message ? (
+          <pre className="mb-5 overflow-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-overlay)] p-3 text-left font-mono text-[11px] leading-relaxed text-[var(--text-secondary)]">
+            {error.message}
+          </pre>
+        ) : (
+          <p className="mb-6 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+            Casi siempre es la base de datos en Railway: verificá que{" "}
+            <code className="rounded bg-[var(--bg-overlay)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--accent)]">
+              DATABASE_URL
+            </code>{" "}
+            esté configurada y que las migraciones estén al día.
+          </p>
+        )}
+
+        {error.digest && (
+          <p className="mb-5 font-mono text-[10px] text-[var(--text-tertiary)]">
+            digest: {error.digest}
+          </p>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={reset}
+            className="w-full rounded-[var(--radius-md)] bg-[var(--accent)] py-2.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            Reintentar
+          </button>
+          <Link
+            href="/"
+            className="w-full rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-overlay)] py-2.5 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+          >
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

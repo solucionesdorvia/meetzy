@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useProductToast } from "@/components/providers/product-toast";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 
 type DeleteSiteButtonProps = {
   /** `siteId` público del widget (slug en URL del dashboard). */
@@ -24,11 +25,6 @@ export default function DeleteSiteButton({
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
-    const ok = window.confirm(
-      `¿Eliminar “${siteName}”? Se borrarán todas las conversaciones y mensajes. Esta acción no se puede deshacer.`,
-    );
-    if (!ok) return;
-
     setLoading(true);
     try {
       const res = await fetch(`/api/sites/${siteId}`, { method: "DELETE" });
@@ -37,26 +33,27 @@ export default function DeleteSiteButton({
         push(data.error ?? "No se pudo eliminar el sitio", "error");
         return;
       }
-      push("Sitio y conversaciones eliminados", "success");
+      push(`"${siteName}" eliminado`, "success");
       if (variant === "card") {
         router.refresh();
       } else {
         router.push("/dashboard");
         router.refresh();
       }
+    } catch {
+      push("Error de red al eliminar", "error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleDelete}
-      disabled={loading}
-      className={`text-sm font-medium transition-colors disabled:opacity-50 ${className}`}
-    >
-      {loading ? "Eliminando…" : "Eliminar sitio"}
-    </button>
+    <ConfirmAction
+      label="Eliminar sitio"
+      confirmLabel="¿Confirmar eliminación?"
+      onConfirm={handleDelete}
+      loading={loading}
+      className={`text-sm font-medium ${className}`}
+    />
   );
 }
