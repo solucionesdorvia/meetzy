@@ -9,8 +9,8 @@ const BodySchema = z.object({
   falUrl: z.string().url(),
   agentName: z.string().min(1).max(80),
   archetype: z.string().min(1),
-  logoUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
-  logoMode: z.enum(["badge", "inspiration"]).optional(),
+  logoUrl: z.union([z.string().url(), z.string().startsWith("data:"), z.literal("")]).optional().nullable(),
+  logoMode: z.enum(["cap", "shirt", "badge", "inspiration"]).optional(),
 });
 
 export const maxDuration = 120;

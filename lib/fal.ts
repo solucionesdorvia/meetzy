@@ -148,16 +148,53 @@ async function removeBackgroundWithBirefnet(imageUrl: string): Promise<Buffer> {
   }
 }
 
-async function compositeLogoOnAvatarBuffer(avatarPngBuffer: Buffer, logoUrl: string): Promise<Buffer> {
-  const logoRes = await fetch(logoUrl);
-  if (!logoRes.ok) throw new Error("Failed to download logo image");
-
-  const logoBuffer = Buffer.from(await logoRes.arrayBuffer());
+/**
+ * Composite a brand logo onto the avatar PNG at a position determined by logoMode:
+ *   "cap"    → small logo on the cap front panel (upper ~8-14% of image, centered)
+ *   "shirt"  → logo on the chest area (~38-50% from top, centered)
+ *   "badge"  → logo near the bottom of the character (legacy default)
+ */
+async function compositeLogoOnAvatarBuffer(
+  avatarPngBuffer: Buffer,
+  logoUrl: string,
+  logoMode: "cap" | "shirt" | "badge" = "badge",
+): Promise<Buffer> {
+  // Accept both HTTP URLs and data URIs
+  let logoBuffer: Buffer;
+  if (logoUrl.startsWith("data:")) {
+    const base64Part = logoUrl.split(",")[1] ?? "";
+    logoBuffer = Buffer.from(base64Part, "base64");
+  } else {
+    const logoRes = await fetch(logoUrl);
+    if (!logoRes.ok) throw new Error("Failed to download logo image");
+    logoBuffer = Buffer.from(await logoRes.arrayBuffer());
+  }
 
   const meta = await sharp(avatarPngBuffer).metadata();
   const w = meta.width ?? 1024;
   const h = meta.height ?? 1024;
-  const targetLogo = Math.max(48, Math.round(w * 0.2));
+
+  // Logo size and position vary by mode
+  let targetLogo: number;
+  let left: number;
+  let top: number;
+
+  if (logoMode === "cap") {
+    // Small logo on cap front panel — upper area
+    targetLogo = Math.max(32, Math.round(w * 0.14));
+    left = Math.round((w - targetLogo) / 2);
+    top = Math.round(h * 0.07); // ~7% from top
+  } else if (logoMode === "shirt") {
+    // Logo on chest — center of image vertically
+    targetLogo = Math.max(48, Math.round(w * 0.18));
+    left = Math.round((w - targetLogo) / 2);
+    top = Math.round(h * 0.40); // ~40% from top = chest
+  } else {
+    // badge — legacy near-bottom placement
+    targetLogo = Math.max(48, Math.round(w * 0.2));
+    left = Math.round((w - targetLogo) / 2);
+    top = Math.max(0, h - targetLogo - Math.round(h * 0.04));
+  }
 
   const logoResized = await sharp(logoBuffer)
     .resize(targetLogo, targetLogo, {
@@ -166,9 +203,6 @@ async function compositeLogoOnAvatarBuffer(avatarPngBuffer: Buffer, logoUrl: str
     })
     .png()
     .toBuffer();
-
-  const left = Math.round((w - targetLogo) / 2);
-  const top = Math.max(0, h - targetLogo - Math.round(h * 0.04));
 
   return sharp(avatarPngBuffer)
     .composite([{ input: logoResized, left, top }])
@@ -290,15 +324,19 @@ export type GenerateAvatarOptions = {
 
 export async function generateAvatarPipelineFromFalUrl(
   falUrl: string,
-  config: Partial<Pick<AvatarConfig, "logoUrl" | "agentName">> & { logoMode?: "badge" | "inspiration" } = {},
+  config: Partial<Pick<AvatarConfig, "logoUrl" | "agentName">> & { logoMode?: "cap" | "shirt" | "badge" | "inspiration" } = {},
   options: { requireCloudinary?: boolean; cloudinaryPublicIdBase?: string } = {},
 ): Promise<{ imageUrl: string; buffer: Buffer }> {
   const requireCloudinary = options.requireCloudinary ?? false;
   let transparentBuf = await removeBackgroundWithBirefnet(falUrl);
 
   if (config.logoUrl?.trim() && config.logoMode !== "inspiration") {
+    const logoPos: "cap" | "shirt" | "badge" =
+      config.logoMode === "cap" ? "cap"
+      : config.logoMode === "shirt" ? "shirt"
+      : "badge";
     try {
-      transparentBuf = await compositeLogoOnAvatarBuffer(transparentBuf, config.logoUrl.trim());
+      transparentBuf = await compositeLogoOnAvatarBuffer(transparentBuf, config.logoUrl.trim(), logoPos);
     } catch (e) {
       console.warn("[avatar] logo composite skipped:", e);
     }

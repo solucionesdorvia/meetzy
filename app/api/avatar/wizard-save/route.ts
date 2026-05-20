@@ -14,7 +14,8 @@ const BodySchema = z.object({
   agentName: z.string().min(1).max(80),
   brandColor: z.string().min(1),
   brandColor2: z.string().optional(),
-  logoUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
+  logoUrl: z.union([z.string().url(), z.string().startsWith("data:"), z.literal("")]).optional().nullable(),
+  logoMode: z.enum(["cap", "shirt", "badge", "inspiration"]).optional(),
   clothingText: z.string().max(40).optional(),
 });
 
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
       businessName: d.businessName,
       agentName: d.agentName,
       clothingText: d.clothingText,
+      logoMode: d.logoMode,
     });
 
     const { url: falUrl, error: falErr } = await generateFluxAvatarImage(prompt);
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
 
     const { imageUrl } = await generateAvatarPipelineFromFalUrl(
       falUrl,
-      { logoUrl: d.logoUrl?.trim() || undefined, agentName: d.agentName },
+      { logoUrl: d.logoUrl?.trim() || undefined, agentName: d.agentName, logoMode: d.logoMode ?? "badge" },
       { requireCloudinary: true, cloudinaryPublicIdBase: d.agentName },
     );
 

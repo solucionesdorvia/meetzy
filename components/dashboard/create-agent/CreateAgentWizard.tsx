@@ -103,7 +103,7 @@ type Persisted = {
   brandColor: string;
   brandColor2: string;
   logoUrl: string | null;
-  logoMode: "badge" | "inspiration";
+  logoMode: "cap" | "shirt" | "badge" | "inspiration";
   avatarUrl: string | null;
   genFallback: boolean;
   createdSiteId: string | null;
@@ -144,7 +144,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
   const [brandColor, setBrandColor] = useState("#6366f1");
   const [brandColor2, setBrandColor2] = useState("#8b5cf6");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [logoMode, setLogoMode] = useState<"badge" | "inspiration">("badge");
+  const [logoMode, setLogoMode] = useState<"cap" | "shirt" | "badge" | "inspiration">("shirt");
   const [avatarMicro, setAvatarMicro] = useState<"pick" | "generating" | "done">("pick");
 
   const [genBusy, setGenBusy] = useState(false);
@@ -256,7 +256,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       if (typeof p.brandColor === "string") setBrandColor(p.brandColor);
       if (typeof p.brandColor2 === "string") setBrandColor2(p.brandColor2);
       if (typeof p.logoUrl === "string" || p.logoUrl === null) setLogoUrl(p.logoUrl);
-      if (p.logoMode === "badge" || p.logoMode === "inspiration") setLogoMode(p.logoMode);
+      if (p.logoMode === "cap" || p.logoMode === "shirt" || p.logoMode === "badge" || p.logoMode === "inspiration") setLogoMode(p.logoMode);
       if (typeof p.avatarUrl === "string") setAvatarUrl(p.avatarUrl);
       if (typeof p.genFallback === "boolean") setGenFallback(p.genFallback);
       if (typeof p.createdSiteId === "string") setCreatedSiteId(p.createdSiteId);
@@ -577,7 +577,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     setSystemPrompt(""); setSitePreview(""); setAnalyzeBusy(false); setAnalyzeError(null); setAnalyzeSkipped(false);
     setAgentType(null); setPersonality("amigable"); setWelcomeMessage("");
     setPrimary(null); setSubtype(""); setBrandColor("#6366f1"); setBrandColor2("#8b5cf6");
-    setLogoUrl(null); setLogoMode("badge"); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
+    setLogoUrl(null); setLogoMode("shirt"); setAvatarMicro("pick"); setAvatarUrl(null); setGenFallback(false);
     setLocalRegen(0); setCreatedSiteId(null); setCelebrate(false); setCreatingAgent(false);
     setAiSuggestions([]); setSelectedSuggestion(null); setSuggestBusy(false); setSuggestError(null); setClothingText(""); setStyleModifier("amigable");
     setColorToast(false);
@@ -1414,6 +1414,218 @@ function StyleChips({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
+// ─── Logo upload + mode selector ────────────────────────────────────────────
+
+const LOGO_MODES = [
+  {
+    value: "cap" as const,
+    emoji: "🧢",
+    label: "Gorra con logo",
+    desc: "El personaje lleva una gorra con tu logo en la visera",
+  },
+  {
+    value: "shirt" as const,
+    emoji: "👕",
+    label: "Remera con logo",
+    desc: "Tu logo impreso en el pecho del personaje",
+  },
+  {
+    value: "inspiration" as const,
+    emoji: "✨",
+    label: "Solo inspiración",
+    desc: "Los colores guían la generación, sin overlay del logo",
+  },
+] as const;
+
+function LogoUploadSection({
+  logoUrl,
+  setLogoUrl,
+  logoMode,
+  setLogoMode,
+  brandColor,
+  setBrandColor,
+  brandColor2,
+  setBrandColor2,
+  colorToast,
+  setColorToast,
+}: {
+  logoUrl: string | null;
+  setLogoUrl: (v: string | null) => void;
+  logoMode: "cap" | "shirt" | "badge" | "inspiration";
+  setLogoMode: (v: "cap" | "shirt" | "badge" | "inspiration") => void;
+  brandColor: string;
+  setBrandColor: (v: string) => void;
+  brandColor2: string;
+  setBrandColor2: (v: string) => void;
+  colorToast: boolean;
+  setColorToast: (v: boolean) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    try {
+      const data = await new Promise<string>((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const r = await fetch("/api/onboarding/upload-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: data, mimeType: file.type }),
+      });
+      const j = (await r.json()) as { url?: string; brandColor?: string; brandColor2?: string };
+      if (j.url) setLogoUrl(j.url);
+      if (j.brandColor) setBrandColor(j.brandColor);
+      if (j.brandColor2) setBrandColor2(j.brandColor2);
+      if (j.brandColor) {
+        setColorToast(true);
+        setTimeout(() => setColorToast(false), 4000);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+        Logo <span className="normal-case font-normal">(opcional)</span>
+      </p>
+
+      {/* Drop zone */}
+      {!logoUrl ? (
+        <label
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-5 text-center transition-all duration-150 ${
+            uploading
+              ? "border-[var(--accent-border)] bg-[var(--accent-subtle)] opacity-70"
+              : "border-[var(--border-default)] bg-[var(--bg-elevated)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]"
+          }`}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="size-5 animate-spin text-[var(--accent)]" />
+              <span className="text-[12px] text-[var(--text-secondary)]">Procesando logo…</span>
+            </>
+          ) : (
+            <>
+              <span className="text-2xl leading-none">🖼️</span>
+              <span className="text-[13px] font-medium text-[var(--text-secondary)]">Subir logo de tu marca</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">PNG, JPG, WebP — extrae la paleta automáticamente</span>
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFile(f);
+            }}
+          />
+        </label>
+      ) : (
+        /* Logo preview + palette strip */
+        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] overflow-hidden">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl} alt="" className="size-12 shrink-0 rounded-lg object-contain bg-[var(--bg-surface)] p-1" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-medium text-[var(--text-primary)]">Logo cargado</p>
+              {colorToast ? (
+                <p className="mt-0.5 flex items-center gap-1 text-[11px] text-[#34d399]">
+                  <Check className="size-3" />
+                  Paleta aplicada automáticamente
+                </p>
+              ) : (
+                <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">Paleta extraída del logo</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setLogoUrl(null)}
+              className="shrink-0 rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+
+          {/* Extracted color swatches */}
+          <div className="flex items-center gap-2 border-t border-[var(--border-subtle)] px-3 py-2">
+            <span className="text-[10px] text-[var(--text-tertiary)]">Paleta:</span>
+            <button
+              type="button"
+              title={`Color principal: ${brandColor}`}
+              onClick={() => {
+                try { setBrandColor2(Color(brandColor).rotate(24).lighten(0.08).hex()); } catch { /* */ }
+              }}
+              className="flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1 text-[10px] font-mono text-white transition-opacity hover:opacity-80"
+              style={{ backgroundColor: brandColor }}
+            >
+              {brandColor}
+            </button>
+            <button
+              type="button"
+              title={`Color secundario: ${brandColor2}`}
+              className="flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1 text-[10px] font-mono text-white transition-opacity hover:opacity-80"
+              style={{ backgroundColor: brandColor2 }}
+            >
+              {brandColor2}
+            </button>
+            <span className="ml-auto text-[10px] text-[var(--text-tertiary)]">← del logo</span>
+          </div>
+        </div>
+      )}
+
+      {/* Mode selector — only shown when logo is uploaded */}
+      {logoUrl ? (
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+            ¿Cómo usar el logo?
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {LOGO_MODES.map((opt) => {
+              const active = logoMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setLogoMode(opt.value)}
+                  className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all duration-150 dash-focus-ring ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-subtle)] shadow-[0_0_0_1px_var(--accent)]"
+                      : "border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--accent-border)]"
+                  }`}
+                >
+                  <span className="text-xl leading-none">{opt.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-[12px] font-semibold ${active ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}>
+                      {opt.label}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-tertiary)]">{opt.desc}</p>
+                  </div>
+                  <div
+                    className={`size-4 shrink-0 rounded-full border-2 transition-colors ${
+                      active ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border-default)]"
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── StepAvatarPick ───────────────────────────────────────────────────────────
+
 function StepAvatarPick({
   isPro,
   businessName,
@@ -1467,8 +1679,8 @@ function StepAvatarPick({
   setBrandColor2: (v: string) => void;
   logoUrl: string | null;
   setLogoUrl: (v: string | null) => void;
-  logoMode: "badge" | "inspiration";
-  setLogoMode: (v: "badge" | "inspiration") => void;
+  logoMode: "cap" | "shirt" | "badge" | "inspiration";
+  setLogoMode: (v: "cap" | "shirt" | "badge" | "inspiration") => void;
   clothingText: string;
   setClothingText: (v: string) => void;
   avatarMicro: "pick" | "generating" | "done";
@@ -1553,6 +1765,20 @@ function StepAvatarPick({
             </label>
           </div>
         </div>
+
+        {/* Logo upload for Starter — colour extraction only */}
+        <LogoUploadSection
+          logoUrl={logoUrl}
+          setLogoUrl={setLogoUrl}
+          logoMode={logoMode}
+          setLogoMode={setLogoMode}
+          brandColor={brandColor}
+          setBrandColor={setBrandColor}
+          brandColor2={brandColor2}
+          setBrandColor2={setBrandColor2}
+          colorToast={colorToast}
+          setColorToast={setColorToast}
+        />
 
         {/* Upgrade nudge */}
         <div className="flex items-start gap-3 rounded-xl border border-[var(--accent-border)] bg-[var(--accent-subtle)] px-4 py-3">
@@ -1745,91 +1971,18 @@ function StepAvatarPick({
           </div>
 
           {/* Logo */}
-          <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Logo <span className="normal-case font-normal">(opcional)</span></p>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-4 text-center transition-all duration-150 hover:border-[var(--accent-border)] hover:bg-[var(--accent-subtle)]">
-              <span className="text-sm text-[var(--text-secondary)]">Subir logo · o arrastrá acá</span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">PNG, JPG, WebP · los colores se detectan automáticamente</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const reader = new FileReader();
-                  reader.onload = async () => {
-                    const data = reader.result as string;
-                    const r = await fetch("/api/onboarding/upload-logo", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ imageBase64: data, mimeType: f.type }),
-                    });
-                    const j = (await r.json()) as { url?: string; brandColor?: string; brandColor2?: string };
-                    if (j.url) setLogoUrl(j.url);
-                    // Auto-fill brand colors extracted from the logo
-                    if (j.brandColor) setBrandColor(j.brandColor);
-                    if (j.brandColor2) setBrandColor2(j.brandColor2);
-                    if (j.brandColor) {
-                      setColorToast(true);
-                      setTimeout(() => setColorToast(false), 3000);
-                    }
-                  };
-                  reader.readAsDataURL(f);
-                }}
-              />
-            </label>
-            {logoUrl ? (
-              <div className="mt-2 flex items-center gap-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logoUrl} alt="" className="size-10 rounded-lg object-contain" />
-                <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>Quitar</Button>
-              </div>
-            ) : null}
-            {colorToast ? (
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#34d399]">
-                <span>✓</span> Colores detectados automáticamente del logo
-              </p>
-            ) : null}
-            {logoUrl ? (
-              <div className="mt-3 space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-                  Uso del logo
-                </p>
-                <div className="flex flex-col gap-1.5">
-                  {(
-                    [
-                      { value: "badge" as const, label: "Badge sobre el avatar", desc: "Se agrega como emblema sobre el personaje" },
-                      { value: "inspiration" as const, label: "Inspiración visual", desc: "Los colores y estilo guían la generación — sin overlay" },
-                    ] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setLogoMode(opt.value)}
-                      className={`flex items-start gap-2.5 rounded-[var(--radius-sm)] border px-3 py-2 text-left transition-all ${
-                        logoMode === opt.value
-                          ? "border-[var(--accent)] bg-[var(--accent-subtle)]"
-                          : "border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--accent-border)]"
-                      }`}
-                    >
-                      <div
-                        className={`mt-[3px] size-3.5 shrink-0 rounded-full border-2 transition-colors ${
-                          logoMode === opt.value
-                            ? "border-[var(--accent)] bg-[var(--accent)]"
-                            : "border-[var(--border-default)]"
-                        }`}
-                      />
-                      <div>
-                        <p className="text-[12px] font-medium text-[var(--text-primary)]">{opt.label}</p>
-                        <p className="text-[11px] text-[var(--text-tertiary)]">{opt.desc}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          <LogoUploadSection
+            logoUrl={logoUrl}
+            setLogoUrl={setLogoUrl}
+            logoMode={logoMode}
+            setLogoMode={setLogoMode}
+            brandColor={brandColor}
+            setBrandColor={setBrandColor}
+            brandColor2={brandColor2}
+            setBrandColor2={setBrandColor2}
+            colorToast={colorToast}
+            setColorToast={setColorToast}
+          />
         </>
       ) : null}
 

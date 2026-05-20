@@ -80,7 +80,14 @@ export interface AvatarPromptConfig {
   businessName: string;
   agentName: string;
   logoUrl?: string | null;
-  logoMode?: "badge" | "inspiration";
+  /**
+   * How to use the logo in the generated avatar:
+   * - "cap"         → character wears a branded baseball cap; logo composited on front panel
+   * - "shirt"       → character wears a branded polo/t-shirt; logo composited on chest
+   * - "badge"       → logo composited at the bottom of the character (legacy)
+   * - "inspiration" → logo colours/style guide the generation; no composite overlay
+   */
+  logoMode?: "cap" | "shirt" | "badge" | "inspiration";
   /** Agent type drives accessory/expression modifier for human archetypes */
   agentType?: string;
   /** Extra variation suffix for regenerations */
@@ -124,9 +131,17 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
         ? (isCar
             ? `The car's style is inspired by the brand identity — no physical logo overlay.`
             : `This character's visual aesthetic is inspired by the brand's identity. No logo overlay — brand spirit woven into the design.`)
-        : (isCar
-            ? `The car has a small brand badge or decal on its hood.`
-            : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`))
+        : config.logoMode === "cap"
+          ? (isCar
+              ? `The car has a small branded roof badge or license-plate frame area.`
+              : `Character wears a branded baseball cap or snapback hat in brand color ${config.brandColor}. The cap's front panel is clean and unprinted — a blank emblem zone reserved for the brand logo to be added in post-processing. Cap brim faces forward, clearly visible. Detailed cap stitching.`)
+          : config.logoMode === "shirt"
+            ? (isCar
+                ? `The car has a clean hood panel suitable for a brand decal.`
+                : `Character wears a polo shirt or t-shirt in brand color ${config.brandColor}. The CENTER OF THE CHEST is completely plain, clean, empty fabric with NO print, NO text, NO graphics — a blank area reserved for logo placement. Shirt collar and sleeves have a contrasting accent color.`)
+            : (isCar
+                ? `The car has a small brand badge or decal on its hood.`
+                : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`))
     : "";
   const clothingHint = config.clothingText
     ? (isCar
@@ -180,15 +195,25 @@ export function buildWizardPrompt(config: {
   clothingText?: string;
   styleModifier?: string;
   variation?: number;
-  logoMode?: "badge" | "inspiration";
+  logoMode?: "cap" | "shirt" | "badge" | "inspiration";
 }): string {
   const styleLine = config.styleModifier ? (STYLE_MODIFIERS[config.styleModifier] ?? "") : "";
   const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
-  const clothingHint = config.logoMode === "inspiration"
-    ? `The character embodies "${config.businessName}" brand identity — visual style and mood inspired by the brand logo aesthetic.`
-    : (config.clothingText
-        ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
-        : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`);
+
+  let clothingHint: string;
+  if (config.logoMode === "inspiration") {
+    clothingHint = `The character embodies "${config.businessName}" brand identity — visual style and mood inspired by the brand logo aesthetic.`;
+  } else if (config.logoMode === "cap") {
+    clothingHint = `Character wears a branded baseball cap in brand color ${config.brandColor}. Cap front panel is completely blank and clean — empty emblem area, no print. Pair with a casual t-shirt.${config.clothingText ? ` Name badge or patch reads "${config.clothingText}".` : ""}`;
+  } else if (config.logoMode === "shirt") {
+    clothingHint = `Character wears a polo shirt or branded t-shirt in ${config.brandColor}. CENTER CHEST is clean, unprinted, empty fabric — no text, no logo — reserved for logo post-processing.${config.clothingText ? ` Small embroidered name tag reads "${config.clothingText}".` : ""}`;
+  } else {
+    // badge or undefined
+    clothingHint = config.clothingText
+      ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
+      : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`;
+  }
+
   const varSuffix =
     config.variation && config.variation > 0 ? `Unique variation ${config.variation}, slightly different pose.` : "";
 
