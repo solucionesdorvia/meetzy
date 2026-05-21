@@ -305,35 +305,45 @@ export default function DashboardChrome({
         </div>
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
-        {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 z-30 flex h-12 items-center justify-between border-b border-[var(--border-subtle)] bg-[rgba(11,10,15,0.92)] px-4 backdrop-blur-xl">
-          <Link
-            href={DASH}
-            className="font-syne text-[16px] font-extrabold tracking-[-0.04em] text-[var(--accent)]"
+      {/* Mobile top bar — fixed like the bottom nav to avoid iOS sticky-inside-overflow bug */}
+      <header
+        className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between border-b border-[var(--border-subtle)] px-4"
+        style={{
+          background: "rgba(11,10,15,0.97)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          height: "calc(48px + env(safe-area-inset-top, 0px))",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
+      >
+        <Link
+          href={DASH}
+          className="font-syne text-[16px] font-extrabold tracking-[-0.04em] text-[var(--accent)]"
+        >
+          MEETZY
+        </Link>
+        {siteId && sites.length > 0 && (
+          <select
+            value={siteId}
+            onChange={(e) => onWorkspaceChange(e.target.value)}
+            className="h-7 max-w-[160px] rounded-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-2 text-[12px] text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none"
           >
-            MEETZY
-          </Link>
-          {siteId && sites.length > 0 && (
-            <select
-              value={siteId}
-              onChange={(e) => onWorkspaceChange(e.target.value)}
-              className="h-7 max-w-[160px] rounded-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-2 text-[12px] text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none"
-            >
-              {sites.map((s) => (
-                <option key={s.siteId} value={s.siteId}>
-                  {s.agentName || s.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <UserButton
-            appearance={{
-              elements: { userButtonAvatarBox: "size-7 rounded-full" },
-            }}
-          />
-        </header>
-        <main className="dash-page-enter mx-auto w-full max-w-[1480px] flex-1 px-4 py-5 sm:px-6 sm:py-8 md:px-8 md:py-10 lg:px-14 lg:py-14 xl:px-20 xl:py-16 dash-main-safe-bottom">
+            {sites.map((s) => (
+              <option key={s.siteId} value={s.siteId}>
+                {s.agentName || s.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <UserButton
+          appearance={{
+            elements: { userButtonAvatarBox: "size-7 rounded-full" },
+          }}
+        />
+      </header>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <main className="dash-page-enter mx-auto w-full max-w-[1480px] flex-1 px-4 md:px-8 lg:px-14 xl:px-20 dash-main-padding">
           {children}
         </main>
       </div>
