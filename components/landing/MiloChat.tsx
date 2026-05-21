@@ -219,7 +219,7 @@ export default function MiloChat({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="size-full object-contain" />
             ) : (
-              <AgentAvatar size={36} gender="male" agentType="soporte" brandColor="#7c6cff" isSpeaking={streaming} />
+              <AgentAvatar size={36} gender="male" agentType="guia" brandColor="#7c6cff" isSpeaking={streaming} />
             )}
           </div>
           <div className="flex-1 min-w-0">

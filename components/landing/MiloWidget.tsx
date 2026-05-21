@@ -59,7 +59,7 @@ function WidgetBubble({
             style={{ background: "transparent" }}
           />
         ) : (
-          <AgentAvatar size={46} gender="male" agentType="soporte" brandColor={BRAND_COLOR} isSpeaking={streaming} />
+          <AgentAvatar size={46} gender="male" agentType="guia" brandColor={BRAND_COLOR} isSpeaking={streaming} />
         )}
       </div>
 
@@ -100,9 +100,9 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
-  // Start with no avatar URL → AgentAvatar composite (matches hero) renders.
-  // If the API returns a Cloudinary avatarImageUrl, swap in that image.
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // Default to the same Milo PNG the hero uses (full body, headset, purple shirt).
+  // API fetch can override with a Cloudinary URL if the DB has one.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>("/avatars/male_guia.png");
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).
