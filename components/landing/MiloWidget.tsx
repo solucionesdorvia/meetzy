@@ -100,7 +100,8 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // Default to bundled Milo PNG; override with avatarImageUrl from API if set
+  const [avatarUrl, setAvatarUrl] = useState<string | null>("/avatars/male_soporte.png");
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).
