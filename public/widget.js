@@ -233,9 +233,24 @@
       @keyframes mz-fade  { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
       /* \u2500\u2500 MOBILE \u2500\u2500 */
-      @media (max-width: 480px) {
-        .chat { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; bottom: auto; right: auto; left: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
-        .speech { width: 220px; }
+      @media (max-width: 600px) {
+        .chat {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          border-radius: 0;
+          padding-top: env(safe-area-inset-top, 0px);
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+          transform-origin: center center;
+        }
+        .chat:not(.chat-open) { transform: translateY(20px) scale(0.96); }
+        .chat-open { transform: none; }
+        .chat-msgs { padding: 14px 16px; }
+        .chat-input-area { padding: 10px 14px; }
+        .chat-chips { padding: 0 14px 10px; }
+        .speech { width: calc(100vw - 100px); max-width: 280px; }
       }
     `}};function de(t,i){var $;Array.from(document.body.children).forEach(p=>{p.id!=="meetzy-fp"&&(p.style.display="none")}),document.body.style.cssText="margin:0;padding:0;overflow:hidden;";let n=document.createElement("div");n.id="meetzy-fp",n.style.cssText="position:fixed;inset:0;z-index:2147483647;",document.body.appendChild(n);let e=n.attachShadow({mode:"open"}),a=i.brandColor;e.innerHTML=`<style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}

@@ -41,7 +41,8 @@ export async function GET(
 
     return NextResponse.json(site, {
       headers: {
-        "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+        // short max-age so avatar/branding changes propagate quickly to live widgets
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=600",
         "Access-Control-Allow-Origin": "*",
       },
     });
