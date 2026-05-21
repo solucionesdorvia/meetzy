@@ -656,7 +656,7 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
       <div
         className={
           isModal
-            ? "relative flex h-full max-h-[min(620px,90vh)] min-h-0 w-full flex-col overflow-hidden bg-transparent"
+            ? "relative flex h-full max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-transparent sm:max-h-[min(620px,90vh)]"
             : "relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-[var(--bg-base)]"
         }
       >
@@ -742,10 +742,38 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
           </aside>
 
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bg-surface)]">
+            {/* Mobile step indicator: progress bar + current step name */}
+            <div className="md:hidden flex-none border-b border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 py-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                  Paso {macroStep} de 4
+                </p>
+                <p className="text-[12px] font-medium text-[var(--text-primary)] truncate ml-2">
+                  {stepMeta[macroStep - 1]?.title}
+                </p>
+              </div>
+              <div className="mt-2 flex gap-1.5">
+                {stepMeta.map((s) => {
+                  const st = stepStatus(s.n);
+                  return (
+                    <div
+                      key={s.n}
+                      className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                        st === "done"
+                          ? "bg-[var(--success)]"
+                          : st === "active"
+                            ? "bg-[var(--accent)]"
+                            : "bg-[var(--border-subtle)]"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--bg-surface)] md:flex-row">
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--bg-surface)] px-6 py-6 md:px-8 md:py-7">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--bg-surface)] px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-7">
                 <div className={rightPanelClass}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  <p className="hidden md:block text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
                     Paso {macroStep} de 4
                   </p>
                   {macroStep === 1 ? (

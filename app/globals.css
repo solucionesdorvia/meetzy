@@ -1457,8 +1457,8 @@ button.onboard-primary-cta:focus-visible {
 
 .dash-filter-bar {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
   padding: 0;
   border-radius: 0;
@@ -1466,21 +1466,43 @@ button.onboard-primary-cta:focus-visible {
   background: transparent;
   backdrop-filter: none;
   box-shadow: none;
-  margin-bottom: 2.5rem;
-  overflow-x: auto;
+  margin-bottom: 1.5rem;
 }
+
+@media (min-width: 768px) {
+  .dash-filter-bar {
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin-bottom: 2.5rem;
+    overflow-x: auto;
+  }
+}
+
 /* Selects inside the filter bar: fixed width, don't grow/shrink unexpectedly */
 .dash-filter-bar > select {
   width: auto;
   min-width: 0;
   flex-shrink: 0;
+  flex: 1 1 calc(50% - 4px);
+}
+
+@media (min-width: 768px) {
+  .dash-filter-bar > select {
+    flex: 0 0 auto;
+  }
 }
 
 .dash-table-wrap {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--bg-surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.dash-table-wrap table {
+  min-width: 480px;
 }
 .dash-table-wrap table thead tr {
   background: var(--bg-elevated);

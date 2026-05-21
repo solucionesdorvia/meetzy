@@ -129,7 +129,7 @@ export default function DashboardNav() {
               {notifOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                  <div className="absolute right-0 top-10 z-50 w-80 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-[var(--shadow-lg)] overflow-hidden">
+                  <div className="absolute right-0 top-10 z-50 w-[min(320px,calc(100vw-32px))] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-[var(--shadow-lg)] overflow-hidden">
                     <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3">
                       <p className="text-[12px] font-semibold text-[var(--text-primary)]">Hot leads · últimas 24hs</p>
                       <span className="text-[11px] text-[var(--text-tertiary)]">{count} nuevos</span>
