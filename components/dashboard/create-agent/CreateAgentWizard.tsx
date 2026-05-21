@@ -590,7 +590,6 @@ export default function CreateAgentWizard({ variant, userPlan, isGuest, onReques
     analyzeSkipped,
     systemPrompt,
     agentType,
-    welcomeMessage,
     isPro,
     archetype,
     selectedSuggestion,
