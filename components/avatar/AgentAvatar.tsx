@@ -161,21 +161,33 @@ export default function AgentAvatar({
         {/* Sombra de cuello */}
         <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
 
-        {/* ── Badge "M" de Meetzy sobre la camisa ──────────────────────── */}
+        {/* ── Logo "MZ" estilo parche bordado sobre la camisa ────────── */}
         {showBadge && (
-          <text
-            x="50" y="97"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="7"
-            fontWeight="800"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fill="white"
-            opacity="0.22"
-            letterSpacing="-0.3"
-          >
-            M
-          </text>
+          <g>
+            {/* Sombra suave debajo del patch */}
+            <ellipse cx="50" cy="98" rx="9" ry="1.5" fill="rgba(0,0,0,0.18)" />
+            {/* Patch blanco (rounded pill) */}
+            <rect
+              x="40" y="91" width="20" height="7" rx="3.5"
+              fill="#ffffff"
+              stroke={brandColor}
+              strokeWidth="0.5"
+              opacity="0.98"
+            />
+            {/* Lettermark "MZ" en violeta */}
+            <text
+              x="50" y="95.4"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="4.6"
+              fontWeight="900"
+              fontFamily="'Syne', system-ui, -apple-system, sans-serif"
+              fill={brandColor}
+              letterSpacing="-0.15"
+            >
+              MZ
+            </text>
+          </g>
         )}
 
         {/* ── Waveform bars cuando habla ───────────────────────────────── */}
