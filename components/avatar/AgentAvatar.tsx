@@ -161,31 +161,30 @@ export default function AgentAvatar({
         {/* Sombra de cuello */}
         <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
 
-        {/* ── Logo "MZ" estilo parche bordado sobre la camisa ────────── */}
+        {/* ── Wordmark "MEETZY" estilo parche bordado en la camisa ────── */}
         {showBadge && (
           <g>
             {/* Sombra suave debajo del patch */}
-            <ellipse cx="50" cy="98" rx="9" ry="1.5" fill="rgba(0,0,0,0.18)" />
-            {/* Patch blanco (rounded pill) */}
+            <ellipse cx="50" cy="100" rx="22" ry="1.4" fill="rgba(0,0,0,0.22)" />
+            {/* Patch blanco rounded pill */}
             <rect
-              x="40" y="91" width="20" height="7" rx="3.5"
+              x="26" y="92" width="48" height="8" rx="4"
               fill="#ffffff"
-              stroke={brandColor}
-              strokeWidth="0.5"
-              opacity="0.98"
+              stroke="rgba(0,0,0,0.08)"
+              strokeWidth="0.3"
             />
-            {/* Lettermark "MZ" en violeta */}
+            {/* MEETZY wordmark — mismo two-tone que el navbar */}
             <text
-              x="50" y="95.4"
+              x="50" y="96.5"
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="4.6"
-              fontWeight="900"
+              fontSize="5.5"
+              fontWeight="800"
               fontFamily="'Syne', system-ui, -apple-system, sans-serif"
-              fill={brandColor}
-              letterSpacing="-0.15"
+              letterSpacing="-0.16"
             >
-              MZ
+              <tspan fill="#0e0d16">MEET</tspan>
+              <tspan fill={brandColor}>ZY</tspan>
             </text>
           </g>
         )}
