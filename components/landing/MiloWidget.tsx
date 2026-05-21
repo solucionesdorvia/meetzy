@@ -26,10 +26,12 @@ function WidgetBubble({
   phase,
   streaming,
   onClick,
+  avatarUrl,
 }: {
   phase: "bubble" | "open";
   streaming?: boolean;
   onClick: () => void;
+  avatarUrl?: string | null;
 }) {
   return (
     <button
@@ -45,10 +47,20 @@ function WidgetBubble({
     >
       {/* Cara */}
       <div
-        className="rounded-full overflow-hidden flex-shrink-0"
-        style={{ width: 46, height: 46, outline: `2px solid ${BRAND_COLOR}66`, outlineOffset: 1 }}
+        className="rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+        style={{ width: 46, height: 46, outline: `2px solid ${BRAND_COLOR}66`, outlineOffset: 1, background: "#0e0d16" }}
       >
-        <AgentFace size={46} brandColor={BRAND_COLOR} isSpeaking={streaming} />
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="size-full object-contain"
+            style={{ background: "transparent" }}
+          />
+        ) : (
+          <AgentFace size={46} brandColor={BRAND_COLOR} isSpeaking={streaming} />
+        )}
       </div>
 
       {/* Texto */}
@@ -88,6 +100,7 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).
@@ -99,6 +112,21 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Fetch real Milo avatar from the meetzy-landing site config
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/sites/meetzy-landing/config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.avatarImageUrl && typeof data.avatarImageUrl === "string") {
+          setAvatarUrl(data.avatarImageUrl);
+        }
+      })
+      .catch(() => { /* fallback to AgentFace */ });
+    return () => { cancelled = true; };
   }, []);
 
   // Aparece la burbuja a los 6 s — solo burbuja, no auto-abre el chat
@@ -171,6 +199,7 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
               initialMessage={phase === "open" ? opener : undefined}
               context={tracker.context}
               onClose={() => setPhase("bubble")}
+              avatarUrl={avatarUrl}
             />
           </div>
         </div>
@@ -178,7 +207,7 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
         {/* FAB burbuja */}
         <div className="fixed z-[900]" style={{ bottom: "max(20px, env(safe-area-inset-bottom, 20px))", right: 16 }}>
           {phase === "bubble" && (
-            <WidgetBubble phase="bubble" streaming={streaming} onClick={() => setPhase("open")} />
+            <WidgetBubble phase="bubble" streaming={streaming} onClick={() => setPhase("open")} avatarUrl={avatarUrl} />
           )}
         </div>
 
@@ -212,11 +241,12 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
             initialMessage={phase === "open" ? opener : undefined}
             context={tracker.context}
             onClose={() => setPhase("bubble")}
+            avatarUrl={avatarUrl}
           />
         </div>
 
         {/* Burbuja */}
-        <WidgetBubble phase={phase === "open" ? "open" : "bubble"} streaming={streaming} onClick={toggle} />
+        <WidgetBubble phase={phase === "open" ? "open" : "bubble"} streaming={streaming} onClick={toggle} avatarUrl={avatarUrl} />
       </div>
 
       <style>{`@keyframes wpulse { 0%{transform:scale(1);opacity:.6} 70%,100%{transform:scale(1.5);opacity:0} }`}</style>

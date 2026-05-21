@@ -17,6 +17,7 @@ interface MiloChatProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onClose?: () => void;
   onAction?: (action: string) => void;
+  avatarUrl?: string | null;
 }
 
 const SITE_ID = "meetzy-landing";
@@ -51,6 +52,7 @@ export default function MiloChat({
   onSpeakingChange,
   onClose,
   onAction,
+  avatarUrl,
 }: MiloChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -212,8 +214,13 @@ export default function MiloChat({
           className="flex items-center gap-3 px-5 py-3.5 flex-shrink-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(124,108,255,0.04)" }}
         >
-          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-[rgba(124,108,255,0.3)]">
-            <AgentFace size={36} brandColor="#7c6cff" isSpeaking={streaming} />
+          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-[rgba(124,108,255,0.3)] flex items-center justify-center bg-[#0e0d16]">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className="size-full object-contain" />
+            ) : (
+              <AgentFace size={36} brandColor="#7c6cff" isSpeaking={streaming} />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-syne font-bold text-white">Milo</p>
