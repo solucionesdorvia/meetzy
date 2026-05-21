@@ -161,12 +161,12 @@ export default function AgentAvatar({
         {/* Sombra de cuello */}
         <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
 
-        {/* ── Logo Meetzy (PNG real) sobre la camisa ──────────────────── */}
+        {/* ── Logo Meetzy (PNG real) sobre el pecho de Milo ───────────── */}
         {showBadge && (
           <image
             href="/meetzy-logo.png"
-            x="35" y="94"
-            width="30" height="7"
+            x="41" y="64"
+            width="18" height="4"
             preserveAspectRatio="xMidYMid meet"
             opacity="0.95"
           />
