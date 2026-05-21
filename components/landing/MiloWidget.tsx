@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import MiloChat from "./MiloChat";
-import AgentFace from "@/components/avatar/AgentFace";
+import AgentAvatar from "@/components/avatar/AgentAvatar";
 import { type BehaviorTrackerResult } from "@/lib/behavior-tracker";
 
 // Props de marca — en producción vendría del agente configurado por el cliente
@@ -48,7 +48,7 @@ function WidgetBubble({
       {/* Cara */}
       <div
         className="rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-        style={{ width: 46, height: 46, outline: `2px solid ${BRAND_COLOR}66`, outlineOffset: 1, background: "#0e0d16" }}
+        style={{ width: 46, height: 46, outline: `2px solid ${BRAND_COLOR}66`, outlineOffset: 1 }}
       >
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -59,7 +59,7 @@ function WidgetBubble({
             style={{ background: "transparent" }}
           />
         ) : (
-          <AgentFace size={46} brandColor={BRAND_COLOR} isSpeaking={streaming} />
+          <AgentAvatar size={46} gender="male" agentType="soporte" brandColor={BRAND_COLOR} isSpeaking={streaming} />
         )}
       </div>
 
@@ -100,8 +100,9 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
-  // Default to bundled Milo PNG; override with avatarImageUrl from API if set
-  const [avatarUrl, setAvatarUrl] = useState<string | null>("/avatars/male_soporte.png");
+  // Start with no avatar URL → AgentAvatar composite (matches hero) renders.
+  // If the API returns a Cloudinary avatarImageUrl, swap in that image.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).

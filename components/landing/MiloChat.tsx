@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import AgentFace from "@/components/avatar/AgentFace";
+import AgentAvatar from "@/components/avatar/AgentAvatar";
 import { buildContextPrompt, type VisitorContext } from "@/lib/behavior-tracker";
 import DemoPanel from "./DemoPanel";
 
@@ -214,12 +214,12 @@ export default function MiloChat({
           className="flex items-center gap-3 px-5 py-3.5 flex-shrink-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(124,108,255,0.04)" }}
         >
-          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-[rgba(124,108,255,0.3)] flex items-center justify-center bg-[#0e0d16]">
+          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-[rgba(124,108,255,0.3)] flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="size-full object-contain" />
             ) : (
-              <AgentFace size={36} brandColor="#7c6cff" isSpeaking={streaming} />
+              <AgentAvatar size={36} gender="male" agentType="soporte" brandColor="#7c6cff" isSpeaking={streaming} />
             )}
           </div>
           <div className="flex-1 min-w-0">
