@@ -98,9 +98,9 @@ export default async function DashboardPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-16 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-12 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6 sm:mb-10 lg:mb-16 flex flex-col gap-3 sm:gap-4 border-b border-[var(--border-subtle)] pb-5 sm:pb-8 lg:pb-12 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-syne text-[26px] font-extrabold leading-tight tracking-[-1.5px] text-[var(--text-primary)]">
+          <h1 className="font-syne text-[22px] sm:text-[26px] font-extrabold leading-tight tracking-[-1.5px] text-[var(--text-primary)]">
             Mis agentes
           </h1>
           <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[13px] font-light text-[var(--text-tertiary)]">
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
       ) : (
         <div>
           {/* Stats rail */}
-          <div className="mb-16 grid grid-cols-2 gap-5 sm:grid-cols-4">
+          <div className="mb-8 sm:mb-12 lg:mb-16 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-4">
             <div className="dash-home-stat">
               <p className="dash-home-stat-value">{sitesWithMetrics.length}</p>
               <p className="dash-home-stat-label">Agentes</p>
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Agents grid */}
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2">
             {sitesWithMetrics.map((site) => (
               <SiteCard key={site.id} site={site} />
             ))}

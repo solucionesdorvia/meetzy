@@ -55,6 +55,7 @@ export default function DashboardChrome({
   const isOnboardingFullscreen = pathname === `${DASH}/new` || pathname.startsWith(`${DASH}/new/`);
 
   const [collapsed, setCollapsed] = useState(false);
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional: restore sidebar state from localStorage on mount */
   useEffect(() => {
     try {
       const v = localStorage.getItem(SIDEBAR_LS);
@@ -63,6 +64,7 @@ export default function DashboardChrome({
       /* ignore */
     }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
   const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => {
       const next = !c;
@@ -303,8 +305,35 @@ export default function DashboardChrome({
         </div>
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto pb-16 md:pb-0">
-        <main className="dash-page-enter mx-auto w-full max-w-[1480px] flex-1 px-8 py-14 sm:px-12 lg:px-20 xl:px-28 lg:py-16 xl:py-20">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
+        {/* Mobile top bar */}
+        <header className="md:hidden sticky top-0 z-30 flex h-12 items-center justify-between border-b border-[var(--border-subtle)] bg-[rgba(11,10,15,0.92)] px-4 backdrop-blur-xl">
+          <Link
+            href={DASH}
+            className="font-syne text-[16px] font-extrabold tracking-[-0.04em] text-[var(--accent)]"
+          >
+            MEETZY
+          </Link>
+          {siteId && sites.length > 0 && (
+            <select
+              value={siteId}
+              onChange={(e) => onWorkspaceChange(e.target.value)}
+              className="h-7 max-w-[160px] rounded-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-2 text-[12px] text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none"
+            >
+              {sites.map((s) => (
+                <option key={s.siteId} value={s.siteId}>
+                  {s.agentName || s.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <UserButton
+            appearance={{
+              elements: { userButtonAvatarBox: "size-7 rounded-full" },
+            }}
+          />
+        </header>
+        <main className="dash-page-enter mx-auto w-full max-w-[1480px] flex-1 px-4 py-5 sm:px-6 sm:py-8 md:px-8 md:py-10 lg:px-14 lg:py-14 xl:px-20 xl:py-16 dash-main-safe-bottom">
           {children}
         </main>
       </div>
