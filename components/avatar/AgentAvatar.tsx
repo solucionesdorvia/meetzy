@@ -56,7 +56,7 @@ export default function AgentAvatar({
   const shirt2     = brandColor2 ?? adjust(brandColor, -45);
   const shirtDark  = adjust(shirt2, -20);
   const showLogo   = !!logoUrl && size >= 40;
-  const showBadge  = size >= 56 && !showLogo;
+  const showBadge  = size >= 36 && !showLogo;
   const showWave   = isSpeaking && size >= 72;
   // Logo badge flotante: circular, esquina inferior-derecha
   const badgePx    = Math.round(size * 0.34);

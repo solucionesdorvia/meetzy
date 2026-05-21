@@ -100,9 +100,9 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
-  // Default to the same Milo PNG the hero uses (full body, headset, purple shirt).
-  // API fetch can override with a Cloudinary URL if the DB has one.
-  const [avatarUrl, setAvatarUrl] = useState<string | null>("/avatars/male_guia.png");
+  // Start with no override → AgentAvatar (same composite the hero uses) renders.
+  // The API fetch can swap in a Cloudinary avatarImageUrl if the DB has one.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).
