@@ -7,7 +7,6 @@ import AvatarShowcase from "@/components/landing/AvatarShowcase";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Pricing from "@/components/landing/Pricing";
 import LandingOrchestrator from "@/components/landing/LandingOrchestrator";
-import WidgetDemo from "@/components/landing/WidgetDemo";
 import Testimonials from "@/components/landing/Testimonials";
 import TrustStrip from "@/components/landing/TrustStrip";
 import { Stats, MidFunnelCTA } from "@/components/landing/LandingStats";
@@ -35,7 +34,6 @@ export default function HomePage() {
     <main className="relative z-[1] min-h-screen w-full">
       <Navbar />
       <LandingOrchestrator />
-      <WidgetDemo />
       <Stats />
       <Problem />
       <Testimonials />
