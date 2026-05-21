@@ -56,7 +56,6 @@ export default function AgentAvatar({
   const shirt2     = brandColor2 ?? adjust(brandColor, -45);
   const shirtDark  = adjust(shirt2, -20);
   const showLogo   = !!logoUrl && size >= 40;
-  const showBadge  = size >= 36 && !showLogo;
   const showWave   = isSpeaking && size >= 72;
   // Logo badge flotante: circular, esquina inferior-derecha
   const badgePx    = Math.round(size * 0.34);
@@ -161,16 +160,8 @@ export default function AgentAvatar({
         {/* Sombra de cuello */}
         <ellipse cx="50" cy="82" rx="10" ry="3.5" fill="rgba(0,0,0,0.10)" />
 
-        {/* ── Logo Meetzy (PNG real) sobre el pecho de Milo ───────────── */}
-        {showBadge && (
-          <image
-            href="/meetzy-logo.png"
-            x="41" y="64"
-            width="18" height="4"
-            preserveAspectRatio="xMidYMid meet"
-            opacity="0.95"
-          />
-        )}
+        {/* No Meetzy wordmark on generic AgentAvatar — customer agents
+            get their own logo composited by the fal.ai pipeline. */}
 
         {/* ── Waveform bars cuando habla ───────────────────────────────── */}
         {showWave && (

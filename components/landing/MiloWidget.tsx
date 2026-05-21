@@ -100,9 +100,9 @@ export default function MiloWidget({ tracker }: { tracker: BehaviorTrackerResult
   const [opener, setOpener]       = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
-  // Start with no override → AgentAvatar (same composite the hero uses) renders.
-  // The API fetch can swap in a Cloudinary avatarImageUrl if the DB has one.
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // Default to the baked-in Milo + Meetzy wordmark composite. The API fetch
+  // can swap in a Cloudinary avatarImageUrl if the DB has one for meetzy-landing.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>("/avatars/milo-meetzy.png");
   const firedRef    = useRef(false);
   // Keep latest tracker in a ref so the one-time timer can read it without
   // being in its dependency array (tracker is a new object on every render).
