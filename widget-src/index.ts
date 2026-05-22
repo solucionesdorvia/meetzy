@@ -15,6 +15,12 @@ const _scriptOrigin = _scriptSrc ? new URL(_scriptSrc).origin : "";
 const _buildUrl = typeof __MEETZY_APP_URL__ !== "undefined" ? __MEETZY_APP_URL__ : "https://app.meetzy.ai";
 const APP_URL: string = _scriptOrigin || _buildUrl;
 
+/** Strip [ACTION:xxx] markers the agent emits for page-side actions so they
+ *  never show up in the visitor's chat text. */
+function stripActions(text: string): string {
+  return (text || "").replace(/\[ACTION:[^\]]+\]/g, "").replace(/[ \t]{2,}/g, " ").trimEnd();
+}
+
 /* ══════════════════════════════════════
    CONFIG TYPES
 ══════════════════════════════════════ */
@@ -383,8 +389,9 @@ class MeetzyWidget {
     this.shadow.appendChild(el);
   }
 
-  private showMessage(message: string) {
+  private showMessage(rawMessage: string) {
     if (this.state === "chat") return;
+    const message = stripActions(rawMessage);
     this.state = "message";
 
     this.bubbleWrap.classList.add("bub-shake");
@@ -603,7 +610,8 @@ class MeetzyWidget {
   }
 
   /* ── MESSAGES ────────────────────────── */
-  private typeMessage(text: string) {
+  private typeMessage(rawText: string) {
+    const text = stripActions(rawText);
     const wrap = document.createElement("div");
     wrap.className = "msg-wrap msg-agent";
     const bbl = document.createElement("div");
@@ -709,7 +717,7 @@ class MeetzyWidget {
             const chunk = JSON.parse(line.slice(6)) as { type: string; content?: string; component?: UIComponent };
             if (chunk.type === "text" && chunk.content) {
               full += chunk.content;
-              bbl.textContent = full;
+              bbl.textContent = stripActions(full);
               this.msgsEl.scrollTop = 9999;
             }
             if (chunk.type === "ui_component" && chunk.component) {
@@ -935,9 +943,21 @@ class MeetzyWidget {
       @keyframes mz-fade  { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
       /* ── MOBILE ── */
-      @media (max-width: 480px) {
-        .chat { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; bottom: auto; right: auto; left: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
-        .speech { width: 220px; }
+      @media (max-width: 600px) {
+        .chat {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          border-radius: 0;
+          padding-top: env(safe-area-inset-top, 0px);
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .chat-msgs { padding: 14px 16px; }
+        .chat-input-area { padding: 10px 14px; }
+        .chat-chips { padding: 0 14px 10px; }
+        .speech { width: calc(100vw - 100px); max-width: 280px; }
       }
     `;
   }
@@ -1051,7 +1071,7 @@ function initFullPage(siteId: string, config: SiteConfig) {
   function addMsg(r: "a"|"u", t: string): HTMLElement {
     const el = shadow.getElementById("fp-msgs")!;
     const wr = document.createElement("div"); wr.className = `mw m${r}`;
-    const bbl = document.createElement("div"); bbl.className = `mb mb${r}`; bbl.textContent = t;
+    const bbl = document.createElement("div"); bbl.className = `mb mb${r}`; bbl.textContent = r === "a" ? stripActions(t) : t;
     wr.appendChild(bbl); el.appendChild(wr); el.scrollTop = 9999; return bbl;
   }
   addMsg("a", config.welcomeMessage);
@@ -1077,7 +1097,7 @@ function initFullPage(siteId: string, config: SiteConfig) {
         const { done, value } = await reader.read(); if (done) break;
         for (const line of dec.decode(value).split("\n")) {
           if (!line.startsWith("data: ")) continue;
-          try { const c = JSON.parse(line.slice(6)) as { type: string; content?: string }; if (c.type === "text" && c.content) { full += c.content; bbl.textContent = full; msgsEl.scrollTop = 9999; } } catch { /**/ }
+          try { const c = JSON.parse(line.slice(6)) as { type: string; content?: string }; if (c.type === "text" && c.content) { full += c.content; bbl.textContent = stripActions(full); msgsEl.scrollTop = 9999; } } catch { /**/ }
         }
       }
     } catch { bbl.textContent = "Error."; } finally { streaming = false; }
@@ -1090,6 +1110,8 @@ function initFullPage(siteId: string, config: SiteConfig) {
    INIT
 ══════════════════════════════════════ */
 async function init() {
+  // Guard against double-init (SPA navigations on Framer/Webflow re-run the script)
+  if (document.getElementById("meetzy-widget") || document.getElementById("meetzy-fp")) return;
   const siteId = window.MEETZYCONFIG?.siteId;
   if (!siteId) return;
   window._mzWidgetInit = window._mzWidgetInit ?? Date.now();

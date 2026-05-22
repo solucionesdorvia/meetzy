@@ -2,9 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "meetzy-dev",
-      "runtimeExecutable": "/Users/valentindoroszuk/meetzy/.claude/start-dev.sh",
-      "runtimeArgs": [],
+      "name": "meetzy",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/valentindoroszuk/meetzy", "run", "dev"],
+      "cwd": "/Users/valentindoroszuk/meetzy",
       "port": 3000
     }
   ]
