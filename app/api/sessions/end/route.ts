@@ -4,6 +4,8 @@ import { computeFullIntent, type VisitorContextLike } from "@/lib/intent-scorer"
 import { clientIpFromRequest, lookupGeo } from "@/lib/geoip";
 import { inferTrafficSource, upsertVisitorProfile } from "@/lib/visitor-profile-sync";
 import { enrichFromMessage, type ExtractedVisitorHints } from "@/lib/visitor-enrichment";
+import { chatRatelimit } from "@/lib/redis";
+import { logError } from "@/lib/security";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -32,6 +34,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
     const b = parsed.data;
+
+    // Rate limit by visitor — prevents flooding from a single misbehaving widget
+    const { success } = await chatRatelimit.limit(`session-end:${b.siteId}:${b.visitorId}`);
+    if (!success) {
+      return NextResponse.json({ error: "Rate limited" }, { status: 429 });
+    }
 
     const site = await prisma.site.findUnique({ where: { siteId: b.siteId } });
     if (!site) return NextResponse.json({ error: "Site not found" }, { status: 404 });
@@ -135,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
+    logError("sessions.end", e);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

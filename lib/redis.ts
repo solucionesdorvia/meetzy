@@ -85,3 +85,26 @@ export const avatarPreviewIpRatelimit = new Proxy({} as Ratelimit, {
     return (getAvatarPreviewIpRatelimit() as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
+
+// Dashboard read endpoints (analytics, visitors, conversations).
+// Generous — these are authenticated and called from the user's own dashboard.
+// 120 reqs / 1 minute per user covers normal exploration; abuse triggers 429.
+let _dashboardRL: Ratelimit | null = null;
+function getDashboardRatelimit(): typeof noopRatelimit | Ratelimit {
+  if (!hasRedis) return noopRatelimit;
+  if (!_dashboardRL) {
+    _dashboardRL = new Ratelimit({
+      redis: getRedis(),
+      limiter: Ratelimit.slidingWindow(120, "1 m"),
+      analytics: true,
+      prefix: "meetzy:dashboard",
+    });
+  }
+  return _dashboardRL;
+}
+
+export const dashboardRatelimit = new Proxy({} as Ratelimit, {
+  get(_t, prop) {
+    return (getDashboardRatelimit() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});

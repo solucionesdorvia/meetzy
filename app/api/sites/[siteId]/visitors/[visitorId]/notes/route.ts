@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { stripHtml, logError } from "@/lib/security";
 
 const PostSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -54,13 +55,20 @@ export async function POST(
     const parsed = PostSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
+    // Strip HTML to defend against XSS if the note is ever rendered with
+    // dangerouslySetInnerHTML or piped into raw HTML downstream.
+    const safeContent = stripHtml(parsed.data.content);
+    if (!safeContent) {
+      return NextResponse.json({ error: "El contenido quedó vacío después de limpiar HTML." }, { status: 400 });
+    }
+
     const note = await prisma.visitorNote.create({
-      data: { profileId: ctx.profile.id, content: parsed.data.content },
+      data: { profileId: ctx.profile.id, content: safeContent },
     });
 
     return NextResponse.json({ note });
   } catch (e) {
-    console.error(e);
+    logError("notes.POST", e);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

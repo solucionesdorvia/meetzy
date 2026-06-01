@@ -5,6 +5,8 @@ import { startOfDay, subDays, format, eachDayOfInterval } from "date-fns";
 import type { Prisma } from "@prisma/client";
 import { getCachedJson, topQuestionsCacheKey } from "@/lib/analytics-cache";
 import { countryFlagEmoji } from "@/lib/country-flag";
+import { dashboardRatelimit } from "@/lib/redis";
+import { logError } from "@/lib/security";
 
 type Range = "today" | "7d" | "30d" | "all";
 
@@ -109,6 +111,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
   try {
     const dbUser = await getDbUser();
     if (!dbUser) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+
+    // Rate limit by user — prevents the dashboard from hammering the DB
+    // on accidental tight refresh loops or scraping.
+    const { success } = await dashboardRatelimit.limit(`analytics:${dbUser.id}`);
+    if (!success) {
+      return NextResponse.json({ error: "Demasiadas consultas. Esperá un momento." }, { status: 429 });
+    }
+
     const { siteId } = await params;
     const site = await prisma.site.findFirst({ where: { siteId, userId: dbUser.id } });
     if (!site) return NextResponse.json({ error: "Sitio no encontrado." }, { status: 404 });

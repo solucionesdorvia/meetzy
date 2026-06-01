@@ -2,6 +2,8 @@
  * Prompts for fal.ai — 3D cartoon / Duolingo-adjacent expressive mascots.
  */
 
+import { sanitizeAvatarPromptInput } from "@/lib/security";
+
 /**
  * Minimal style modifiers — adjust tone/vibe without changing
  * the base format (3D cartoon, same composition, transparent bg).
@@ -119,11 +121,16 @@ const TYPE_PROMPTS: Record<AvatarArchetype, string> = {
 };
 
 export function buildAvatarPrompt(config: AvatarPromptConfig): string {
+  // Sanitize user-supplied free text before it's used in the image prompt
+  const businessName = sanitizeAvatarPromptInput(config.businessName);
+  const clothingText = config.clothingText ? sanitizeAvatarPromptInput(config.clothingText, 40) : "";
+  const promptHint = config.promptHint ? sanitizeAvatarPromptInput(config.promptHint, 400) : undefined;
+
   const isHuman = config.archetype === "human_male" || config.archetype === "human_female";
   const isCar = config.archetype === "car";
-  const typeLine = config.promptHint ?? (TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male);
+  const typeLine = promptHint ?? (TYPE_PROMPTS[config.archetype] ?? TYPE_PROMPTS.human_male);
   const agentTypeModifier =
-    !config.promptHint && isHuman && config.agentType
+    !promptHint && isHuman && config.agentType
       ? (AGENT_TYPE_MODIFIERS[config.agentType] ?? "")
       : "";
   const logoInstruction = config.logoUrl
@@ -143,11 +150,11 @@ export function buildAvatarPrompt(config: AvatarPromptConfig): string {
                 ? `The car has a small brand badge or decal on its hood.`
                 : `The character wears clothing with a subtle chest emblem area suitable for a small brand logo.`))
     : "";
-  const clothingHint = config.clothingText
+  const clothingHint = clothingText
     ? (isCar
-        ? `The car body has a small "${config.clothingText}" badge or decal.`
-        : `Character's clothing or collar includes "${config.clothingText}" naturally integrated as an embroidered patch or name badge.`)
-    : `Subtle identity energy for "${config.businessName}" — expressive character, no literal text in the image.`;
+        ? `The car body has a small "${clothingText}" badge or decal.`
+        : `Character's clothing or collar includes "${clothingText}" naturally integrated as an embroidered patch or name badge.`)
+    : `Subtle identity energy for "${businessName}" — expressive character, no literal text in the image.`;
   // For car archetypes, color goes directly to body paint for accuracy
   const colors = isCar
     ? `Car body painted in ${config.brandColor}${config.brandColor2 ? `, accent details in ${config.brandColor2}` : ""}, glossy shiny finish.`
@@ -197,21 +204,27 @@ export function buildWizardPrompt(config: {
   variation?: number;
   logoMode?: "cap" | "shirt" | "badge" | "inspiration";
 }): string {
+  // Sanitize all user-supplied free text before it lands in the image prompt —
+  // strips NSFW/violent keywords, prompt-injection keywords, and special chars.
+  const businessName = sanitizeAvatarPromptInput(config.businessName);
+  const clothingText = config.clothingText ? sanitizeAvatarPromptInput(config.clothingText, 40) : "";
+  const promptHint = sanitizeAvatarPromptInput(config.promptHint, 400);
+
   const styleLine = config.styleModifier ? (STYLE_MODIFIERS[config.styleModifier] ?? "") : "";
   const colors = `Primary brand color ${config.brandColor}${config.brandColor2 ? `, accent ${config.brandColor2}` : ""}.`;
 
   let clothingHint: string;
   if (config.logoMode === "inspiration") {
-    clothingHint = `The character embodies "${config.businessName}" brand identity — visual style and mood inspired by the brand logo aesthetic.`;
+    clothingHint = `The character embodies "${businessName}" brand identity — visual style and mood inspired by the brand logo aesthetic.`;
   } else if (config.logoMode === "cap") {
-    clothingHint = `Character wears a branded baseball cap in brand color ${config.brandColor}. Cap front panel is completely blank and clean — empty emblem area, no print. Pair with a casual t-shirt.${config.clothingText ? ` Name badge or patch reads "${config.clothingText}".` : ""}`;
+    clothingHint = `Character wears a branded baseball cap in brand color ${config.brandColor}. Cap front panel is completely blank and clean — empty emblem area, no print. Pair with a casual t-shirt.${clothingText ? ` Name badge or patch reads "${clothingText}".` : ""}`;
   } else if (config.logoMode === "shirt") {
-    clothingHint = `Character wears a polo shirt or branded t-shirt in ${config.brandColor}. CENTER CHEST is clean, unprinted, empty fabric — no text, no logo — reserved for logo post-processing.${config.clothingText ? ` Small embroidered name tag reads "${config.clothingText}".` : ""}`;
+    clothingHint = `Character wears a polo shirt or branded t-shirt in ${config.brandColor}. CENTER CHEST is clean, unprinted, empty fabric — no text, no logo — reserved for logo post-processing.${clothingText ? ` Small embroidered name tag reads "${clothingText}".` : ""}`;
   } else {
     // badge or undefined
-    clothingHint = config.clothingText
-      ? `Character's clothing includes "${config.clothingText}" as an embroidered patch or name badge — integrate naturally.`
-      : `Character represents the brand "${config.businessName}" — expressive and on-brand, no literal text.`;
+    clothingHint = clothingText
+      ? `Character's clothing includes "${clothingText}" as an embroidered patch or name badge — integrate naturally.`
+      : `Character represents the brand "${businessName}" — expressive and on-brand, no literal text.`;
   }
 
   const varSuffix =
@@ -219,7 +232,7 @@ export function buildWizardPrompt(config: {
 
   return [
     AVATAR_STYLE_BASE,
-    config.promptHint,
+    promptHint,
     styleLine,
     colors,
     clothingHint,
