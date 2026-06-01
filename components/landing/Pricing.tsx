@@ -275,7 +275,7 @@ export default function Pricing() {
               <div>
                 <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--c-muted2)", marginBottom: 16 }}>Legal</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {[["Privacidad", "#"], ["Términos", "#"], ["Cookies", "#"], ["Contacto", "mailto:hola@meetzy.io"]].map(([l, h]) => (
+                  {[["Privacidad", "/privacy"], ["Términos", "/terms"], ["Contacto", "mailto:hola@meetzy.io"]].map(([l, h]) => (
                     <a key={l} href={h} style={{ fontSize: "0.875rem", color: "var(--c-muted)", textDecoration: "none", transition: "color 0.15s" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--c-text)"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--c-muted)"}>{l}</a>

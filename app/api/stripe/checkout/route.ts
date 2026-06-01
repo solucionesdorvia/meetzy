@@ -4,11 +4,27 @@ import { stripe, PLANS, type PlanKey } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   try {
+    // Guard: Stripe not configured (e.g. soft-launch without payments)
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: "Los pagos están temporalmente deshabilitados. Estás en plan gratis." },
+        { status: 503 },
+      );
+    }
+
     const dbUser = await getDbUser();
     if (!dbUser) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
     const { plan } = (await req.json()) as { plan: string };
     if (!PLANS[plan as PlanKey]) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+
+    const priceId = PLANS[plan as PlanKey]!.priceId;
+    if (!priceId) {
+      return NextResponse.json(
+        { error: "El precio de este plan no está configurado todavía." },
+        { status: 503 },
+      );
+    }
 
     let customerId = dbUser.stripeCustomerId;
     if (!customerId) {
@@ -22,7 +38,7 @@ export async function POST(req: NextRequest) {
       customer: customerId,
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [{ price: PLANS[plan as PlanKey]!.priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true&plan=${plan}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
       metadata: { userId: dbUser.id, plan },

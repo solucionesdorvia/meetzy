@@ -20,10 +20,16 @@ const isPublic = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // SECURITY: TESTING_MODE bypasses Clerk auth — ONLY honored outside production.
+  // If accidentally set in prod, log a warning and ignore it.
   if (process.env.TESTING_MODE === "true") {
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("x-pathname", req.nextUrl.pathname);
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    if (process.env.NODE_ENV !== "production") {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("x-pathname", req.nextUrl.pathname);
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
+    // In production: refuse to bypass auth. Fall through to normal Clerk check.
+    console.warn("[middleware] TESTING_MODE=true ignored in production");
   }
 
   if (!isPublic(req)) {

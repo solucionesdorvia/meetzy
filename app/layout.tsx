@@ -46,6 +46,14 @@ export const metadata: Metadata = {
       "Meetzy observa lo que cada visitante hace en tu sitio y responde con precisión antes de que tenga que preguntar.",
     url: process.env.NEXT_PUBLIC_APP_URL ?? "https://meetzy.ai",
     locale: "es_AR",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Meetzy — Agentes IA para tu web, con tu marca",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -53,6 +61,11 @@ export const metadata: Metadata = {
     description:
       "Meetzy observa lo que cada visitante hace en tu sitio y responde con precisión antes de que tenga que preguntar.",
     creator: "@meetzyai",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   robots: {
     index: true,
