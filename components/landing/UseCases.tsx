@@ -175,7 +175,7 @@ export default function UseCases() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="uc-compare-grid" style={{ display: "grid", gap: 12 }}>
               <div style={{
                 background: "rgba(255,255,255,0.025)", border: "1px solid var(--c-border)",
                 borderRadius: 12, padding: "14px 16px",
@@ -205,6 +205,10 @@ export default function UseCases() {
       </div>
 
       <style>{`
+        .uc-compare-grid { grid-template-columns: 1fr; }
+        @media (min-width: 640px) {
+          .uc-compare-grid { grid-template-columns: 1fr 1fr; }
+        }
         @media (min-width: 900px) {
           .use-cases-layout { grid-template-columns: 220px 1fr !important; }
         }

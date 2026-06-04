@@ -242,7 +242,7 @@ export default function SiteCard({ site }: { site: SiteCardModel }) {
             variant="ghost"
             size="sm"
             onClick={() => void copyScript()}
-            className="h-7 gap-1 rounded-[var(--radius-sm)] px-2 text-[11px] text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+            className="h-9 sm:h-8 min-h-[36px] gap-1 rounded-[var(--radius-sm)] px-2.5 text-[11px] text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
           >
             <Clipboard className="size-3" strokeWidth={2} />
             {copyLabel}
@@ -250,7 +250,7 @@ export default function SiteCard({ site }: { site: SiteCardModel }) {
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 gap-1 rounded-[var(--radius-sm)] px-2 text-[11px]"
+            className="h-9 sm:h-8 min-h-[36px] gap-1 rounded-[var(--radius-sm)] px-2.5 text-[11px]"
             asChild
           >
             <Link href={`/dashboard/${site.siteId}`}>

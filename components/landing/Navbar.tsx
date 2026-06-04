@@ -93,13 +93,13 @@ export default function Navbar() {
             <div className="landing-nav-mobile-cta">
               {!isSignedIn && (
                 <SignUpButton mode="modal">
-                  <button type="button" className="btn-primary" style={{ fontSize: "0.78rem", padding: "0.45rem 0.9rem" }}>
+                  <button type="button" className="btn-primary" style={{ fontSize: "0.78rem", padding: "0.65rem 1rem", minHeight: 40 }}>
                     Empezar
                   </button>
                 </SignUpButton>
               )}
               {isSignedIn && (
-                <Link href="/dashboard" className="btn-primary" style={{ fontSize: "0.78rem", padding: "0.45rem 0.9rem" }}>
+                <Link href="/dashboard" className="btn-primary" style={{ fontSize: "0.78rem", padding: "0.65rem 1rem", minHeight: 40 }}>
                   Dashboard
                 </Link>
               )}

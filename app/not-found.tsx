@@ -21,7 +21,7 @@ export default function NotFound() {
 
         {/* 404 number — big and stylish */}
         <p
-          className="font-syne text-[120px] font-extrabold leading-none tracking-[-0.06em] mb-2"
+          className="font-syne font-extrabold leading-none tracking-[-0.06em] mb-2 text-[clamp(72px,22vw,120px)]"
           style={{
             background:
               "linear-gradient(135deg, var(--accent, #7c6cff) 0%, #c4b5fd 70%, var(--text-primary, #f0ede8) 100%)",
@@ -43,13 +43,13 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 py-2.5 text-[14px] font-medium text-white transition hover:bg-[var(--accent-hover)] shadow-[0_0_16px_rgba(99,102,241,0.25)]"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 py-2.5 text-[14px] font-medium text-white transition hover:bg-[var(--accent-hover)] shadow-[0_0_16px_rgba(99,102,241,0.25)]"
           >
             Ir al inicio
           </Link>
           <Link
             href="/pricing"
-            className="inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-6 py-2.5 text-[14px] font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-6 py-2.5 text-[14px] font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
           >
             Ver planes
           </Link>

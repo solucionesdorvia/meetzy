@@ -110,7 +110,7 @@ export default function Pricing() {
                     color: plan.highlighted ? "rgba(183,176,255,0.9)" : "var(--c-muted2)" }}>{plan.name}</p>
 
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
-                    <span style={{ fontFamily: "var(--font-syne)", fontWeight: 800, fontSize: plan.highlighted ? "3rem" : "2.4rem", letterSpacing: "-0.045em", color: "var(--c-text)", lineHeight: 1 }}>
+                    <span style={{ fontFamily: "var(--font-syne)", fontWeight: 800, fontSize: plan.highlighted ? "clamp(2.2rem, 8vw, 3rem)" : "clamp(1.8rem, 7vw, 2.4rem)", letterSpacing: "-0.045em", color: "var(--c-text)", lineHeight: 1 }}>
                       {plan.price}
                     </span>
                     <span style={{ fontSize: "0.85rem", color: "var(--c-muted2)" }}>/mes</span>
@@ -263,20 +263,20 @@ export default function Pricing() {
             {/* Links cols */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 32 }} className="footer-links-grid">
               <div>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--c-muted2)", marginBottom: 16 }}>Producto</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--c-muted2)", marginBottom: 12 }}>Producto</p>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {[["Cómo funciona", "#como-funciona"], ["Para quién", "#para-quien"], ["Precios", "#precios"], ["Demo", "#demo"]].map(([l, h]) => (
-                    <a key={l} href={h} style={{ fontSize: "0.875rem", color: "var(--c-muted)", textDecoration: "none", transition: "color 0.15s" }}
+                    <a key={l} href={h} className="footer-link" style={{ fontSize: "0.875rem", color: "var(--c-muted)", textDecoration: "none", transition: "color 0.15s", padding: "11px 0", minHeight: 44, display: "inline-flex", alignItems: "center" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--c-text)"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--c-muted)"}>{l}</a>
                   ))}
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--c-muted2)", marginBottom: 16 }}>Legal</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--c-muted2)", marginBottom: 12 }}>Legal</p>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {[["Privacidad", "/privacy"], ["Términos", "/terms"], ["Contacto", "mailto:hola@meetzy.io"]].map(([l, h]) => (
-                    <a key={l} href={h} style={{ fontSize: "0.875rem", color: "var(--c-muted)", textDecoration: "none", transition: "color 0.15s" }}
+                    <a key={l} href={h} className="footer-link" style={{ fontSize: "0.875rem", color: "var(--c-muted)", textDecoration: "none", transition: "color 0.15s", padding: "11px 0", minHeight: 44, display: "inline-flex", alignItems: "center" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--c-text)"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--c-muted)"}>{l}</a>
                   ))}

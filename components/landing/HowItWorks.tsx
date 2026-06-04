@@ -85,7 +85,7 @@ export default function HowItWorks() {
                   <div style={{
                     position: "absolute", top: 8, right: 14,
                     fontFamily: "var(--font-syne)", fontWeight: 800,
-                    fontSize: "5rem", lineHeight: 1,
+                    fontSize: "clamp(3rem, 12vw, 5rem)", lineHeight: 1,
                     color: "rgba(255,255,255,0.055)",
                     userSelect: "none", pointerEvents: "none",
                     letterSpacing: "-0.04em",
@@ -137,7 +137,7 @@ export default function HowItWorks() {
                 El script más simple del mundo
               </p>
             </div>
-            <pre style={{ fontFamily: "monospace", fontSize: "clamp(0.68rem, 2vw, 0.78rem)", color: "rgba(236,234,229,0.6)", lineHeight: 1.85, overflow: "auto", margin: 0 }}>
+            <pre style={{ fontFamily: "monospace", fontSize: "clamp(0.78rem, 2vw, 0.88rem)", color: "rgba(236,234,229,0.7)", lineHeight: 1.85, overflow: "auto", margin: 0 }}>
               {`<script>
   window.MEETZYCONFIG = { siteId: `}
               <span style={{ color: "#86efac" }}>{'"tu-id"'}</span>
