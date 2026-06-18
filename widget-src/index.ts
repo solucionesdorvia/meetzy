@@ -21,6 +21,138 @@ function stripActions(text: string): string {
   return (text || "").replace(/\[ACTION:[^\]]+\]/g, "").replace(/[ \t]{2,}/g, " ").trimEnd();
 }
 
+/** Page-navigation actions: lets the agent guide visitors around the host
+ *  page. We discover safe targets, ship them to the chat backend with every
+ *  request, and execute [ACTION:type:target] tags from streaming responses. */
+interface PageActionDescriptor { type: string; target: string; label?: string }
+
+function discoverPageActions(): PageActionDescriptor[] {
+  if (typeof document === "undefined") return [];
+  const out: PageActionDescriptor[] = [];
+  const seen = new Set<string>();
+  const add = (a: PageActionDescriptor) => {
+    const k = `${a.type}:${a.target}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push(a);
+  };
+  // 1) Explicit opt-in [data-meetzy-action]
+  document.querySelectorAll<HTMLElement>("[data-meetzy-action]").forEach((el) => {
+    const name = el.getAttribute("data-meetzy-action") || "";
+    const label = el.getAttribute("data-meetzy-label") || name;
+    if (name) add({ type: "scroll-to", target: name, label });
+  });
+  // 2) Auto-discover section / main / [data-section] IDs
+  document.querySelectorAll<HTMLElement>("section[id],main[id],div[id][data-section]").forEach((el) => {
+    const id = el.id;
+    if (!id || id.length > 40 || /[<>'"]/.test(id)) return;
+    const label = el.getAttribute("data-meetzy-label") || el.getAttribute("aria-label") || id.replace(/[-_]/g, " ");
+    add({ type: "scroll-to", target: `#${id}`, label });
+  });
+  // 3) Heading anchors
+  document.querySelectorAll<HTMLElement>("h1[id],h2[id],h3[id]").forEach((el) => {
+    const id = el.id;
+    if (!id || id.length > 40 || /[<>'"]/.test(id)) return;
+    const label = (el.textContent || "").trim().slice(0, 60) || id;
+    add({ type: "scroll-to", target: `#${id}`, label });
+  });
+  // 4) Same-origin nav links with descriptive text
+  document.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (!href || href[0] === "#" || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+    try {
+      const u = new URL(href, location.href);
+      if (u.origin !== location.origin) return;
+      const label = (a.textContent || "").trim();
+      if (!label || label.length < 2 || label.length > 50) return;
+      add({ type: "navigate", target: u.pathname + u.search, label });
+    } catch { /* ignore */ }
+  });
+  return out.slice(0, 30);
+}
+
+function executePageAction(raw: string): void {
+  try {
+    const colon = raw.indexOf(":");
+    let type = colon > 0 ? raw.slice(0, colon).trim() : raw.trim();
+    let target = colon > 0 ? raw.slice(colon + 1).trim() : "";
+    // Legacy single-segment shorthand: [ACTION:scroll-pricing] / [ACTION:show-demo]
+    if (!target && type && type.indexOf("-") > 0) {
+      const dash = type.indexOf("-");
+      const prefix = type.slice(0, dash);
+      const rest = type.slice(dash + 1);
+      if (prefix === "scroll" || prefix === "show" || prefix === "go") {
+        target = `#${rest}`;
+        type = "scroll-to";
+      }
+    }
+    if (!type) return;
+
+    if (type === "scroll-to" || type === "scroll") {
+      let el: HTMLElement | null = null;
+      if (target && target[0] === "#") el = document.getElementById(target.slice(1));
+      else if (target) {
+        const sel = `[data-meetzy-action="${(typeof CSS !== "undefined" && CSS.escape) ? CSS.escape(target) : target}"]`;
+        el = document.querySelector<HTMLElement>(sel) || document.getElementById(target);
+      }
+      if (el) {
+        try { if (document.activeElement && (document.activeElement as HTMLElement).blur) (document.activeElement as HTMLElement).blur(); } catch { /**/ }
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Retry instantly if smooth scroll didn't land within 400ms (mobile / focus quirks)
+        const elFinal = el;
+        setTimeout(() => {
+          if (Math.abs(elFinal.getBoundingClientRect().top) > 60) {
+            elFinal.scrollIntoView({ behavior: "auto", block: "start" });
+          }
+        }, 400);
+        // Spotlight pulse so the visitor sees where they landed
+        const prevOutline = el.style.outline;
+        const prevShadow = el.style.boxShadow;
+        const prevTrans = el.style.transition;
+        el.style.transition = "outline 0.25s ease,box-shadow 0.25s ease";
+        el.style.outline = "2px solid rgba(124,108,255,0.7)";
+        el.style.outlineOffset = "4px";
+        el.style.boxShadow = "0 0 0 6px rgba(124,108,255,0.18)";
+        setTimeout(() => {
+          el!.style.outline = prevOutline;
+          el!.style.boxShadow = prevShadow;
+          el!.style.outlineOffset = "";
+          el!.style.transition = prevTrans;
+        }, 2200);
+      }
+    } else if (type === "navigate" || type === "goto") {
+      if (!target || target.startsWith("javascript:")) return;
+      try {
+        const url = new URL(target, location.href);
+        if (url.origin !== location.origin) return;
+        setTimeout(() => location.assign(url.pathname + url.search + url.hash), 600);
+      } catch { /* ignore */ }
+    } else if (type === "highlight" || type === "flash") {
+      let el: Element | null = null;
+      if (target && target[0] === "#") el = document.getElementById(target.slice(1));
+      else if (target) { try { el = document.querySelector(target); } catch { /**/ } }
+      if (el && el instanceof HTMLElement) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const prevShadow = el.style.boxShadow;
+        const prevTrans = el.style.transition;
+        el.style.transition = "box-shadow 0.3s ease";
+        el.style.boxShadow = "0 0 0 4px rgba(124,108,255,0.55),0 0 24px rgba(124,108,255,0.35)";
+        setTimeout(() => { el!.style.boxShadow = prevShadow; (el as HTMLElement).style.transition = prevTrans; }, 2500);
+      }
+    }
+    if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+      window.dispatchEvent(new CustomEvent("meetzy:action", { detail: { type, target, raw } }));
+    }
+  } catch { /* never throw from action execution */ }
+}
+
+function processPageActions(text: string): void {
+  if (!text) return;
+  const re = /\[ACTION:([^\]]+)\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) executePageAction(m[1]);
+}
+
 /* ══════════════════════════════════════
    CONFIG TYPES
 ══════════════════════════════════════ */
@@ -687,6 +819,7 @@ class MeetzyWidget {
           plan: this.config.plan,
           currentSection: ctx.currentSection,
           visitorContext: ctx,
+          pageActions: discoverPageActions(),
           referrer: ctx.referrer || document.referrer || null,
           utmSource: this.tracker.utm.utm_source,
           utmMedium: this.tracker.utm.utm_medium,
@@ -728,6 +861,11 @@ class MeetzyWidget {
           } catch { /* skip */ }
         }
       }
+
+      // Execute any [ACTION:type:target] tags the agent emitted (scroll,
+      // navigate, highlight). Runs after full stream so we know the complete
+      // tag isn't being split across chunks.
+      processPageActions(full);
 
       // Show contextual chips after response
       this.updateChips(ctx.currentSection);
